@@ -21,6 +21,22 @@
  * If you want to add model panel driver, please add here.
  */
 
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_HX83112F_BOE_A13)
+extern int __init hx83112f_boe_a13_panel_init(void);
+#endif
+
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_CSOT_A13)
+extern int __init nt36672c_csot_a13_panel_init(void);
+#endif
+
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A13)
+extern int __init nt36672c_tianma_a13_panel_init(void);
+#endif
+
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_TD4375_BOE_A13)
+extern int __init td4375_boe_a13_panel_init(void);
+#endif
+
 #if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A14)
 extern int __init nt36672c_tianma_a14_panel_init(void);
 #endif
@@ -39,6 +55,18 @@ extern int __init ft8720_skyworth_a14_panel_init(void);
 
 static void __init register_model_panels(void)
 {
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_HX83112F_BOE_A13)
+	hx83112f_boe_a13_panel_init();
+#endif
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_CSOT_A13)
+	nt36672c_csot_a13_panel_init();
+#endif
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A13)
+	nt36672c_tianma_a13_panel_init();
+#endif
+#if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_TD4375_BOE_A13)
+	td4375_boe_a13_panel_init();
+#endif
 #if IS_ENABLED(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A14)
 	nt36672c_tianma_a14_panel_init();
 #endif

@@ -24,6 +24,10 @@ mcd-panel-$(CONFIG_DYNAMIC_FREQ) += df/dynamic_freq.o
 
 
 mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_DUMMY_LCD_V320) += dummy_lcd/dummy_lcd.o
+mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_HX83112F_BOE_A13) += hx83112f_boe_a13/hx83112f_boe.o
+mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_NT36672C_CSOT_A13) += nt36672c_csot/nt36672c_csot.o
+mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A13) += nt36672c_tianma/nt36672c_tianma.o
+mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_TD4375_BOE_A13) += td4375_boe/td4375_boe.o
 mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_NT36672C_TIANMA_A14) += nt36672c_tianma_a14/nt36672c_tianma.o
 mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_ILI7807_BOE_A14) += ili7807_boe_a14/ili7807_boe.o
 mcd-panel-$(CONFIG_EXYNOS_DECON_LCD_NT36672C_CSOT_A14) += nt36672c_csot_a14/nt36672c_csot.o
