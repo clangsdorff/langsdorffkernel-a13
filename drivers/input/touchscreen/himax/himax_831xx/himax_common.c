@@ -245,17 +245,7 @@ bool FAKE_POWER_KEY_SEND = true;
 #endif
 
 static unsigned int lpm_mode;
-
-static int check_lpm_mode(char *str)
-{
-	if (strncmp(str, "charger", 7) == 0)
-		lpm_mode = 1;
-	else
-		lpm_mode = 0;
-
-	return 0;
-}
-early_param("androidboot.mode", check_lpm_mode);
+module_param(lpm_mode, uint, 0444);
 
 #if defined(HX_PALM_REPORT)
 static int himax_palm_detect(uint8_t *buf)
