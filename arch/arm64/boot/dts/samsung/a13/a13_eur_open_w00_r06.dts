@@ -7130,6 +7130,22 @@
 		};
 	};
 
+	fragment@ramoops {
+		target = <0xffffffff>;
+
+		__overlay__ {
+
+			ramoops@f1c00000 {
+				compatible = "ramoops";
+				reg = <0x00 0xf1c00000 0x200000>;
+				record-size = <0x40000>;
+				console-size = <0x100000>;
+				pmsg-size = <0x80000>;
+				ftrace-size = <0x00>;
+			};
+		};
+	};
+
 	__fixups__ {
 		gpa1 = "/fragment@smd/__overlay__/samsung_mobile_device/gpio_afc:gpio_afc_data:0", "/fragment@model/__overlay__/gpio_keys/button@0:gpios:0", "/fragment@36/__overlay__/pn547@2B:pn547,irq-gpio:0", "/fragment@39/__overlay__/a96t396@20:interrupt-parent:0", "/fragment@39/__overlay__/a96t396@20:irq_gpio:0", "/fragment@47/__overlay__/gpios/conn-det:gpios:0";
 		gpg0 = "/fragment@smd/__overlay__/samsung_mobile_device/gpio_afc:gpio_afc_switch:0";
@@ -7253,7 +7269,7 @@
 		panel_0 = "/fragment@78:target:0";
 		usbdrd_dwc3 = "/fragment@81:target:0";
 		usbdrd_phy0 = "/fragment@82:target:0";
-		reserved_memory = "/fragment@sec_debug_next:target:0";
+		reserved_memory = "/fragment@sec_debug_next:target:0", "/fragment@ramoops:target:0";
 		contexthub_0 = "/fragment@contexthub:target:0";
 	};
 
