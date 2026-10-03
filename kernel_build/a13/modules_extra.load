@@ -9,3 +9,5 @@ syv660_charger.ko
 max1726x_fuelgauge.ko
 himax_831xx.ko
 ovt_td4150_spi.ko
+input_booster_lkm.ko
+sec_debug_coredump.ko
