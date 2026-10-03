@@ -1,0 +1,16 @@
+clk_exynos.ko
+pinctrl-samsung-core.ko
+cmupmucal.ko
+exynos-pmu.ko
+exynos-pd.ko
+exynos_acpm.ko
+acpm-mfd-bus.ko
+s2mpu12_mfd.ko
+s2mpu12-regulator.ko
+dw_mmc.ko
+dw_mmc-pltfm.ko
+dw_mmc-exynos-sec.ko
+dw_mmc-exynos-fmp.ko
+dss.ko
+sec_debug.ko
+sec_reboot.ko

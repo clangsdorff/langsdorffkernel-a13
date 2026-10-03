@@ -1,0 +1,30 @@
+name: A13 Kernel Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - a13-port
+
+jobs:
+  A13:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Install tools
+      run: |
+        sudo apt-get install python2 pahole libelf-dev zstd brotli -y
+        DIR="$(readlink -f .)"
+        PARENT_DIR="$(readlink -f "${DIR}/..")"
+        git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$PARENT_DIR/clang-r450784d" --depth=1
+    - uses: rui314/setup-mold@v1
+    - name: Build
+      run: |
+        bash kernel_build/builda13.sh "$(pwd)"
+    - name: Upload
+      uses: actions/upload-artifact@v7
+      with:
+        name: A13-Kernel
+        path: kernel_build/langsdorff@a13*

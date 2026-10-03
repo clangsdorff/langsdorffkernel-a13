@@ -1,0 +1,7 @@
+### SFF ###
+# ro.boot.bootloader is <model><region><version>, e.g. A135FXXSEEZB2
+prop_startswith ro.boot.bootloader A135F
+quick_flash yes
+flash_compressed boot.br /dev/block/by-name/boot
+flash_compressed dtbo.br /dev/block/by-name/dtbo
+flash_compressed vbmeta.br /dev/block/by-name/vbmeta
