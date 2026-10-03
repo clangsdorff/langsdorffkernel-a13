@@ -110,7 +110,7 @@ static ssize_t tcpc_show_property(struct device *dev,
 {
 	struct tcpc_device *tcpc = to_tcpc_device(dev);
 	const ptrdiff_t offset = attr - tcpc_device_attributes;
-	int i, flag;
+	int i = 0, flag;
 #ifdef CONFIG_USB_POWER_DELIVERY
 	struct tcpm_power_cap_val cap;
 	struct tcpm_power_cap caps;
