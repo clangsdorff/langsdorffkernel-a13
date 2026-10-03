@@ -2,9 +2,6 @@ name: A13 Kernel Build
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - a13-port
 
 jobs:
   A13:
