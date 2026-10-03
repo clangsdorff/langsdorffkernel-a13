@@ -1,2 +1,11 @@
 is-cis-gc5035.ko
 is-actuator-dw9808.ko
+rt-regmap.ko
+tcpc_class_module.ko
+tcpc_et7303.ko
+vt_muic.ko
+afc_charger.ko
+syv660_charger.ko
+max1726x_fuelgauge.ko
+himax_831xx.ko
+ovt_td4150_spi.ko
