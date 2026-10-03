@@ -2557,6 +2557,7 @@ static const struct of_device_id sensor_cis_gc5035_match[] = {
 	{
 		.compatible = "samsung,exynos-is-cis-gc5035-macro",
 	},
+	{},
 };
 MODULE_DEVICE_TABLE(of, sensor_cis_gc5035_match);
 
