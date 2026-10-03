@@ -5,6 +5,8 @@ dtbo-y += samsung/a14/a14_eur_open_w00_r00.dtbo
 dtbo-y += samsung/a14/a14_eur_open_w00_r02.dtbo
 dtbo-y += samsung/a14/a14_eur_open_w00_r01.dtbo
 dtbo-y += exynos/board/erd/s5e3830-erd3830.dtbo
+dtbo-y += samsung/a13/a13_eur_open_w00_r00.dtbo
+dtbo-y += samsung/a13/a13_eur_open_w00_r06.dtbo
 dtb-y += exynos/s5e3830.dtb
 
 targets += dtbs
