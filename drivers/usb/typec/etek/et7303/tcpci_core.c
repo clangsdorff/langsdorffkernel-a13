@@ -60,7 +60,7 @@ static ssize_t tcpc_store_property(struct device *dev,
 	.store = tcpc_store_property,					\
 }
 
-static struct class *tcpc_class;
+struct class *tcpc_class;
 EXPORT_SYMBOL_GPL(tcpc_class);
 
 static struct device_type tcpc_dev_type;
@@ -727,6 +727,7 @@ int tcpc_schedule_init_work(struct tcpc_device *tcpc)
 		&tcpc->init_work, msecs_to_jiffies(30*1000));
 	return 0;
 }
+EXPORT_SYMBOL(tcpc_schedule_init_work);
 
 int register_tcp_dev_notifier(struct tcpc_device *tcp_dev,
 			      struct notifier_block *nb)
@@ -795,11 +796,13 @@ void tcpci_lock_typec(struct tcpc_device *tcpc)
 {
 	mutex_lock(&tcpc->typec_lock);
 }
+EXPORT_SYMBOL(tcpci_lock_typec);
 
 void tcpci_unlock_typec(struct tcpc_device *tcpc)
 {
 	mutex_unlock(&tcpc->typec_lock);
 }
+EXPORT_SYMBOL(tcpci_unlock_typec);
 
 static void tcpc_init_attrs(struct device_type *dev_type)
 {

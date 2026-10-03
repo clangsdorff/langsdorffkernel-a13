@@ -417,6 +417,7 @@ int tcpci_alert(struct tcpc_device *tcpc_dev)
 
 	return ret;
 }
+EXPORT_SYMBOL(tcpci_alert);
 
 /*
  * [BLOCK] TYPEC device changed

@@ -67,6 +67,7 @@ int tcpm_shutdown(struct tcpc_device *tcpc_dev)
 
 	return 0;
 }
+EXPORT_SYMBOL(tcpm_shutdown);
 
 int tcpm_inquire_remote_cc(struct tcpc_device *tcpc_dev,
 	uint8_t *cc1, uint8_t *cc2, bool from_ic)

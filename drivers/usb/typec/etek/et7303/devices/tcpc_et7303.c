@@ -1679,3 +1679,5 @@ static void __exit et7303_exit(void)
 	i2c_del_driver(&et7303_driver);
 }
 module_exit(et7303_exit);
+
+MODULE_LICENSE("GPL");
