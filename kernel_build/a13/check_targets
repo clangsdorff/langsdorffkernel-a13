@@ -1,0 +1,9 @@
+drivers/usb/typec/etek/et7303/
+drivers/usb/typec/etek/et7303/devices/
+drivers/usb/typec/common/
+drivers/muic/common/
+drivers/muic/common/vt_muic/
+drivers/muic/afc_gpio/
+drivers/battery/common/
+drivers/battery/charger/syv660_charger/
+drivers/battery/fuelgauge/max1726x_fuelgauge/
