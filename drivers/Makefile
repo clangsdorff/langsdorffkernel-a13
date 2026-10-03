@@ -225,5 +225,11 @@ obj-y += nfc/lsi/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += muic/slsi/s2mu106/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += sensors_lego/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += battery/common/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
+obj-y += muic/common/vt_muic/
+obj-y += muic/afc_gpio/
+obj-y += battery/charger/syv660_charger/
+obj-y += battery/fuelgauge/max1726x_fuelgauge/
+obj-y += usb/typec/etek/et7303/
+obj-y += usb/typec/etek/et7303/devices/
 
 obj-$(CONFIG_KSU) += kernelsu/

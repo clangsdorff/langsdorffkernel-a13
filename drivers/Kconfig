@@ -277,5 +277,11 @@ source "drivers/nfc/lsi/Kconfig" # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 source "drivers/muic/slsi/s2mu106/Kconfig" # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 source "drivers/sensors_lego/Kconfig" # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 source "drivers/battery/common/Kconfig" # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
+source "drivers/muic/common/vt_muic/Kconfig"
+source "drivers/muic/afc_gpio/Kconfig"
+source "drivers/battery/charger/syv660_charger/Kconfig"
+source "drivers/battery/fuelgauge/max1726x_fuelgauge/Kconfig"
+source "drivers/usb/typec/etek/et7303/Kconfig"
+source "drivers/usb/typec/etek/et7303/devices/Kconfig"
 source "drivers/kernelsu/Kconfig"
 endmenu
