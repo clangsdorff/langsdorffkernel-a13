@@ -47,7 +47,8 @@ OUT_DTBIMAGE="$TMPDIR/dtb.img"
 BOOT_PART_SIZE=46137344
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
-BUILD_ARGS="LOCALVERSION=-langsdorff${XY_VERSION}-${GIT_COMMIT} KBUILD_BUILD_USER=Langsdorff KBUILD_BUILD_HOST=langsdorff"
+BUILD_ARGS=(LOCALVERSION=-langsdorff${XY_VERSION}-${GIT_COMMIT} KBUILD_BUILD_USER=Langsdorff KBUILD_BUILD_HOST=langsdorff)
+command -v ccache >/dev/null && BUILD_ARGS+=("CC=ccache clang")
 
 DIR="$(readlink -f .)"
 PARENT_DIR="$(readlink -f ${DIR}/..)"
@@ -66,10 +67,10 @@ export TARGET_SOC=s5e3830
 
 rm -rf "$TMPDIR" "$MODULES_OUTDIR"
 
-make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out $BUILD_ARGS $DEFCONFIG
-make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out $BUILD_ARGS dtbs
-make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out $BUILD_ARGS
-make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" INSTALL_MOD_PATH="$MODULES_OUTDIR" modules_install
+make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}" $DEFCONFIG
+make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}" dtbs
+make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}"
+make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}" INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" INSTALL_MOD_PATH="$MODULES_OUTDIR" modules_install
 
 mkdir -p "$TMPDIR" "$RAMDISK_DIR" "$VDLKM_DIR"
 

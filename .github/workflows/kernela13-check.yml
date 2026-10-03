@@ -11,6 +11,13 @@ on:
     branches:
       - a13-port
 
+env:
+  CCACHE_DIR: ${{ github.workspace }}/../ccache
+  CCACHE_BASEDIR: ${{ github.workspace }}
+  CCACHE_NOHASHDIR: true
+  CCACHE_COMPILERCHECK: string:clang-r450784d
+  CCACHE_MAXSIZE: 3G
+
 jobs:
   check:
     runs-on: ubuntu-22.04
@@ -18,10 +25,21 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v6
+    - name: Restore clang
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/../clang-r450784d
+        key: clang-r450784d
     - name: Install tools
       run: |
-        sudo apt-get install libelf-dev -y
-        git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$(readlink -f ..)/clang-r450784d" --depth=1
+        sudo apt-get install libelf-dev ccache -y
+        [ -d "$(readlink -f ..)/clang-r450784d/bin" ] || git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$(readlink -f ..)/clang-r450784d" --depth=1
+    - name: Restore ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ github.workspace }}/../ccache
+        key: ccache-check-${{ github.sha }}
+        restore-keys: ccache-check-
     - name: Build targets
       env:
         INPUT_TARGETS: ${{ github.event.inputs.targets }}
@@ -31,15 +49,21 @@ jobs:
         echo "targets: $TARGETS"
         export PATH="$(readlink -f ..)/clang-r450784d/bin:$PATH"
         export ARCH=arm64 LLVM=1 CROSS_COMPILE=aarch64-linux-gnu- PLATFORM_VERSION=14 TARGET_SOC=s5e3830
-        make -j$(nproc) O=out a13noavb_defconfig
+        make -j$(nproc) O=out CC="ccache clang" a13noavb_defconfig
         scripts/config --file out/.config -d DEBUG_INFO_BTF
-        make -j$(nproc) O=out olddefconfig
-        make -j$(nproc) O=out prepare
-        make -k -j$(nproc) O=out $TARGETS 2>&1 | tee build.log
+        make -j$(nproc) O=out CC="ccache clang" olddefconfig
+        make -j$(nproc) O=out CC="ccache clang" prepare
+        make -k -j$(nproc) O=out CC="ccache clang" $TARGETS 2>&1 | tee build.log
         exit ${PIPESTATUS[0]}
     - name: Errors
       if: always()
       run: grep -E "error:|Error [0-9]|undefined" build.log || true
+    - name: Save ccache
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ github.workspace }}/../ccache
+        key: ccache-check-${{ github.sha }}
 
   build:
     needs: check
@@ -48,14 +72,39 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v6
+    - name: Restore clang
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/../clang-r450784d
+        key: clang-r450784d
     - name: Install tools
       run: |
-        sudo apt-get install python2 pahole libelf-dev zstd brotli -y
-        git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$(readlink -f ..)/clang-r450784d" --depth=1
+        sudo apt-get install python2 pahole libelf-dev zstd brotli ccache -y
+        [ -d "$(readlink -f ..)/clang-r450784d/bin" ] || git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$(readlink -f ..)/clang-r450784d" --depth=1
     - uses: rui314/setup-mold@v1
+    - name: Restore ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ github.workspace }}/../ccache
+          ${{ github.workspace }}/out/.thinlto-cache
+        key: ccache-build-${{ github.sha }}
+        restore-keys: ccache-build-
     - name: Build
       run: |
+        ccache -z
         bash kernel_build/builda13.sh "$(pwd)"
+    - name: Cache stats
+      if: always()
+      run: ccache -s
+    - name: Save ccache
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ github.workspace }}/../ccache
+          ${{ github.workspace }}/out/.thinlto-cache
+        key: ccache-build-${{ github.sha }}
     - name: Upload
       uses: actions/upload-artifact@v7
       with:
