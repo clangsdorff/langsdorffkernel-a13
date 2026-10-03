@@ -55,6 +55,7 @@
 static const struct v4l2_subdev_ops subdev_ops;
 
 #if defined(CONFIG_VENDER_MCD_V2)
+#include "is-vender-rom-config.h"
 extern const struct is_vender_rom_addr *vender_rom_addr[SENSOR_POSITION_MAX];
 #endif
 

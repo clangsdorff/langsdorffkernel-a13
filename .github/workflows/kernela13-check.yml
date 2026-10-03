@@ -1,4 +1,4 @@
-name: A13 Partial Build
+name: A13 Check and Build
 
 on:
   workflow_dispatch:
@@ -40,3 +40,24 @@ jobs:
     - name: Errors
       if: always()
       run: grep -E "error:|Error [0-9]|undefined" build.log || true
+
+  build:
+    needs: check
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Install tools
+      run: |
+        sudo apt-get install python2 pahole libelf-dev zstd brotli -y
+        git clone https://gitlab.com/tejas101k/clang-r450784d.git/ "$(readlink -f ..)/clang-r450784d" --depth=1
+    - uses: rui314/setup-mold@v1
+    - name: Build
+      run: |
+        bash kernel_build/builda13.sh "$(pwd)"
+    - name: Upload
+      uses: actions/upload-artifact@v7
+      with:
+        name: A13-Kernel
+        path: kernel_build/langsdorff@a13*
