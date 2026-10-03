@@ -7,3 +7,5 @@ drivers/muic/afc_gpio/
 drivers/battery/common/
 drivers/battery/charger/syv660_charger/
 drivers/battery/fuelgauge/max1726x_fuelgauge/
+drivers/input/touchscreen/ovt/td4150_spi/
+drivers/input/touchscreen/himax/himax_831xx/
