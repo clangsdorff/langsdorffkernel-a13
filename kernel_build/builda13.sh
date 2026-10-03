@@ -104,6 +104,7 @@ for d in debug_ramdisk dev metadata mnt proc second_stage_resources sys first_st
     mkdir -p "$RAMDISK_DIR/$d"
 done
 chmod 750 "$RAMDISK_DIR/init"
+chmod 755 "$RAMDISK_DIR/system/bin/snapuserd_ramdisk"
 cp -f "$A13DIR/fstab.s5e3830" "$RAMDISK_DIR/fstab.s5e3830"
 cp -f "$A13DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
 chmod 640 "$RAMDISK_DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
