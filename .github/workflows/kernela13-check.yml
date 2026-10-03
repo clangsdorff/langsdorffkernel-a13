@@ -11,16 +11,15 @@ on:
     branches:
       - a13-port
 
-env:
-  CCACHE_DIR: ${{ github.workspace }}/../ccache
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_NOHASHDIR: true
-  CCACHE_COMPILERCHECK: string:clang-r450784d
-  CCACHE_MAXSIZE: 3G
-
 jobs:
   check:
     runs-on: ubuntu-22.04
+    env:
+      CCACHE_DIR: ${{ runner.workspace }}/ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_NOHASHDIR: true
+      CCACHE_COMPILERCHECK: string:clang-r450784d
+      CCACHE_MAXSIZE: 3G
 
     steps:
     - name: Checkout
@@ -28,7 +27,7 @@ jobs:
     - name: Restore clang
       uses: actions/cache@v4
       with:
-        path: ${{ github.workspace }}/../clang-r450784d
+        path: ${{ runner.workspace }}/clang-r450784d
         key: clang-r450784d
     - name: Install tools
       run: |
@@ -37,7 +36,7 @@ jobs:
     - name: Restore ccache
       uses: actions/cache/restore@v4
       with:
-        path: ${{ github.workspace }}/../ccache
+        path: ${{ runner.workspace }}/ccache
         key: ccache-check-${{ github.sha }}
         restore-keys: ccache-check-
     - name: Build targets
@@ -62,12 +61,18 @@ jobs:
       if: always()
       uses: actions/cache/save@v4
       with:
-        path: ${{ github.workspace }}/../ccache
+        path: ${{ runner.workspace }}/ccache
         key: ccache-check-${{ github.sha }}
 
   build:
     needs: check
     runs-on: ubuntu-22.04
+    env:
+      CCACHE_DIR: ${{ runner.workspace }}/ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_NOHASHDIR: true
+      CCACHE_COMPILERCHECK: string:clang-r450784d
+      CCACHE_MAXSIZE: 3G
 
     steps:
     - name: Checkout
@@ -75,7 +80,7 @@ jobs:
     - name: Restore clang
       uses: actions/cache@v4
       with:
-        path: ${{ github.workspace }}/../clang-r450784d
+        path: ${{ runner.workspace }}/clang-r450784d
         key: clang-r450784d
     - name: Install tools
       run: |
@@ -86,7 +91,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          ${{ github.workspace }}/../ccache
+          ${{ runner.workspace }}/ccache
           ${{ github.workspace }}/out/.thinlto-cache
         key: ccache-build-${{ github.sha }}
         restore-keys: ccache-build-
@@ -102,7 +107,7 @@ jobs:
       uses: actions/cache/save@v4
       with:
         path: |
-          ${{ github.workspace }}/../ccache
+          ${{ runner.workspace }}/ccache
           ${{ github.workspace }}/out/.thinlto-cache
         key: ccache-build-${{ github.sha }}
     - name: Upload
