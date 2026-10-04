@@ -3137,6 +3137,10 @@
 			decon_board_hx83112f {
 				phandle = <0x33>;
 
+				panel_boot_enable {
+					type = "regulator,enable", "lcd_vddi", "regulator,enable", "lcd_rst", "regulator,enable", "lcd_bl_en", "regulator,enable", "lcd_vsp", "regulator,enable", "lcd_vsn";
+				};
+
 				panel_power_enable {
 					type = "regulator,enable", "lcd_vddi", "delay,usleep", "2000";
 				};
@@ -3195,6 +3199,10 @@
 
 			decon_board_nt36672c_csot {
 				phandle = <0x34>;
+
+				panel_boot_enable {
+					type = "regulator,enable", "lcd_vddi", "regulator,enable", "lcd_rst", "regulator,enable", "lcd_bl_en", "regulator,enable", "lcd_vsp", "regulator,enable", "lcd_vsn";
+				};
 
 				panel_power_enable {
 					type = "regulator,enable", "lcd_vddi", "delay,usleep", "2000";
@@ -3255,6 +3263,10 @@
 			decon_board_nt36672c_tianma {
 				phandle = <0x35>;
 
+				panel_boot_enable {
+					type = "regulator,enable", "lcd_vddi", "regulator,enable", "lcd_rst", "regulator,enable", "lcd_bl_en", "regulator,enable", "lcd_vsp", "regulator,enable", "lcd_vsn";
+				};
+
 				panel_power_enable {
 					type = "regulator,enable", "lcd_vddi", "delay,usleep", "2000";
 				};
@@ -3313,6 +3325,10 @@
 
 			decon_board_td4375 {
 				phandle = <0x36>;
+
+				panel_boot_enable {
+					type = "regulator,enable", "lcd_vddi", "regulator,enable", "lcd_rst", "regulator,enable", "lcd_bl_en", "regulator,enable", "lcd_vsp", "regulator,enable", "lcd_vsn";
+				};
 
 				panel_power_enable {
 					type = "regulator,enable", "lcd_vddi", "delay,usleep", "2000";
