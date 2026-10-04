@@ -6653,13 +6653,16 @@
 				place = <0x00>;
 			};
 
+			// 4.19 DT has no rom_* props, 5.10 is_vendor_rom_parse_dt BUG_ONs without them
 			rear_eeprom@B0 {
 				compatible = "samsung,rear-eeprom-i2c";
+				status = "disabled";
 				reg = <0x58>;
 			};
 
 			rear_eeprom@A4 {
 				compatible = "samsung,rear4-eeprom-i2c";
+				status = "disabled";
 				reg = <0x52>;
 			};
 		};
