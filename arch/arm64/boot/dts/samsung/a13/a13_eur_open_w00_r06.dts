@@ -7135,14 +7135,9 @@
 
 		__overlay__ {
 
-			ramoops@f0f10000 {
-				// stock 4.19 dss log_pstore layout; console lands in the zone stock recovery exposes as pmsg-ramoops-0
-				compatible = "ramoops";
+			ramcon@f0f10000 {
+				// stock 4.19 dss log_pstore; earlycon=ramcon fills the zone stock recovery exposes as pmsg-ramoops-0
 				reg = <0x00 0xf0f10000 0x8000>;
-				record-size = <0x4000>;
-				console-size = <0x4000>;
-				pmsg-size = <0x00>;
-				ftrace-size = <0x00>;
 			};
 		};
 	};

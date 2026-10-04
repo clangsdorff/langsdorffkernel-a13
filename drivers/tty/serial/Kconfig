@@ -85,6 +85,17 @@ config SERIAL_EARLYCON_ARM_SEMIHOST
 	  with "earlycon=smh" on the kernel command line. The console is
 	  enabled when early_param is processed.
 
+config SERIAL_EARLYCON_RAMCON
+	bool "Early console into a RAM buffer"
+	depends on ARM64
+	select SERIAL_CORE
+	select SERIAL_CORE_CONSOLE
+	select SERIAL_EARLYCON
+	help
+	  Early console that writes into one page of RAM using the pstore
+	  persistent_ram header, for boards without a reachable UART.
+	  Enabled with "earlycon=ramcon,<page-aligned phys addr>".
+
 config SERIAL_EARLYCON_RISCV_SBI
 	bool "Early console using RISC-V SBI"
 	depends on RISCV_SBI_V01
