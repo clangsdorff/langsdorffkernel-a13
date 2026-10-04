@@ -228,6 +228,10 @@ static int init_sdg_bdev(void)
 
 	pr_debug("%s: start\n", __func__);
 
+	/* A13: sec_debug probe bails before reading bdev_path (sec_debug_next disabled) */
+	if (!bdev_path)
+		return -ENODEV;
+
 	bdev = blkdev_get_by_path(bdev_path, mode, NULL);
 	if (IS_ERR(bdev)) {
 		dev_t devt;
