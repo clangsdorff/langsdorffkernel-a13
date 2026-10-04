@@ -1571,7 +1571,8 @@ static int __init secdbg_extra_info_init(void)
 	sh_buf = secdbg_base_get_debug_base(SDN_MAP_EXTRA_INFO);
 	if (!sh_buf) {
 		pr_err("%s: No extra info buffer\n", __func__);
-		return -EFAULT;
+		/* A13 LK leaves sec_debug_next unbuilt; a failed insmod here aborts first-stage init */
+		return 0;
 	}
 	sec_debug_extra_info_buffer_init();
 
