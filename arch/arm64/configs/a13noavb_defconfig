@@ -512,7 +512,7 @@ CONFIG_STACKPROTECTOR_PER_TASK=y
 #
 # Boot options
 #
-CONFIG_CMDLINE="stack_depot_disable=on rodata=on kvm-arm.mode=protected cgroup.memory=nokmem elevator=mq-deadline earlycon=ramcon,0xf0000000 keep_bootcon ignore_loglevel initcall_debug"
+CONFIG_CMDLINE="stack_depot_disable=on rodata=on kvm-arm.mode=protected cgroup.memory=nokmem elevator=mq-deadline earlycon=ramcon,0xf0000000 keep_bootcon ignore_loglevel initcall_debug cpuidle.off=1"
 # CONFIG_CMDLINE_FROM_BOOTLOADER is not set
 CONFIG_CMDLINE_EXTEND=y
 # CONFIG_CMDLINE_FORCE is not set
@@ -7990,7 +7990,7 @@ CONFIG_LOCK_DEBUGGING_SUPPORT=y
 # CONFIG_LOCK_TORTURE_TEST is not set
 # CONFIG_WW_MUTEX_SELFTEST is not set
 # CONFIG_SCF_TORTURE_TEST is not set
-# CONFIG_CSD_LOCK_WAIT_DEBUG is not set
+CONFIG_CSD_LOCK_WAIT_DEBUG=y
 # end of Lock Debugging (spinlocks, mutexes, etc...)
 
 CONFIG_STACKTRACE=y
