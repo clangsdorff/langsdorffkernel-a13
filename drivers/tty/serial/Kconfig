@@ -92,9 +92,10 @@ config SERIAL_EARLYCON_RAMCON
 	select SERIAL_CORE_CONSOLE
 	select SERIAL_EARLYCON
 	help
-	  Early console that writes into one page of RAM using the pstore
-	  persistent_ram header, for boards without a reachable UART.
-	  Enabled with "earlycon=ramcon,<page-aligned phys addr>".
+	  Early console for Exynos 850 boards without a reachable UART. Appends
+	  to the debug-snapshot log_kernel ring after the bootloader's log, which
+	  stock recovery shows as /proc/last_kmsg, and mirrors the tail into the
+	  ramoops pmsg zone. Enabled with "earlycon=ramcon,<dss header addr>".
 
 config SERIAL_EARLYCON_RISCV_SBI
 	bool "Early console using RISC-V SBI"
