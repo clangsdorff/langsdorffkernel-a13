@@ -109,7 +109,7 @@ cp -f "$A13DIR/fstab.s5e3830" "$RAMDISK_DIR/fstab.s5e3830"
 cp -f "$A13DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
 chmod 640 "$RAMDISK_DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
 
-(cd "$RAMDISK_DIR" && find . | sort | cpio --quiet -o -H newc -R root:root | zstd -19 -q -c > "$TMPDIR/ramdisk.zst")
+(cd "$RAMDISK_DIR" && find . | sort | cpio --quiet -o -H newc -R root:root | lz4 -9cl > "$TMPDIR/ramdisk.lz4")
 
 python2 "$MKDTBOIMG" create "$OUT_DTBIMAGE" --page_size=2048 --version=0 "$IN_DTB" --id=0 --rev=0 --custom0=0x0 --custom1=0xff
 python2 "$MKDTBOIMG" create "$OUT_DTBOIMG" --page_size=2048 --version=0 \
@@ -119,7 +119,7 @@ python2 "$MKDTBOIMG" create "$OUT_DTBOIMG" --page_size=2048 --version=0 \
 # Layout matches the stock A13 boot.img; os_version/patch must stay equal to stock for KeyMint
 $MKBOOTIMG --header_version 2 \
     --kernel "$OUT_KERNEL" \
-    --ramdisk "$TMPDIR/ramdisk.zst" \
+    --ramdisk "$TMPDIR/ramdisk.lz4" \
     --dtb "$OUT_DTBIMAGE" \
     --base 0x10000000 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 \
     --tags_offset 0x00000100 --dtb_offset 0x00000000 --pagesize 2048 \
