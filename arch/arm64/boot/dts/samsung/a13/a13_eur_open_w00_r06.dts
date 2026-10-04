@@ -7099,9 +7099,11 @@
 
 		__overlay__ {
 
+			// A13 LK never builds the sec_debug_next lv1 table, so sec_debug_base_early would memset through NULL
 			sec_debug_next {
 				reg = <0x00 0x91200000 0x200000>;
 				no-map;
+				status = "disabled";
 				phandle = <0x61>;
 			};
 		};
