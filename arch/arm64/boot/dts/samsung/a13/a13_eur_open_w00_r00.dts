@@ -7130,6 +7130,46 @@
 		};
 	};
 
+	fragment@cpus {
+		target-path = "/cpus";
+
+		__overlay__ {
+			// A13 EL3 takes PSCI CPU_ON targets as cluster<<8|core like stock 4.19, not the A14's MT-shifted MPIDR
+
+			cpu@0000 {
+				reg = <0x00 0x00>;
+			};
+
+			cpu@0001 {
+				reg = <0x00 0x01>;
+			};
+
+			cpu@0002 {
+				reg = <0x00 0x02>;
+			};
+
+			cpu@0003 {
+				reg = <0x00 0x03>;
+			};
+
+			cpu@0004 {
+				reg = <0x00 0x100>;
+			};
+
+			cpu@0005 {
+				reg = <0x00 0x101>;
+			};
+
+			cpu@0006 {
+				reg = <0x00 0x102>;
+			};
+
+			cpu@0007 {
+				reg = <0x00 0x103>;
+			};
+		};
+	};
+
 	fragment@ramoops {
 		target = <0xffffffff>;
 
