@@ -3717,7 +3717,8 @@
 						iod,format = <0x01>;
 						iod,io_type = <0x01>;
 						iod,link_type = <0x00>;
-						iod,attrs = <0x2082>;
+						// bit 13 is IO_ATTR_MULTI_CH in the 5.10 cpif and needs iod,ch_count; A14 uses 0x82
+						iod,attrs = <0x82>;
 						iod,max_tx_size = <0x800>;
 						iod,ul_num_buffers = <0x10>;
 						iod,ul_buffer_size = <0x800>;
