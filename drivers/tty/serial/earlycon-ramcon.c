@@ -2,7 +2,9 @@
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/io.h>
+#include <linux/printk.h>
 #include <linux/serial_core.h>
+#include <linux/string.h>
 #include <asm/fixmap.h>
 
 /* stock 4.19 debug-snapshot: LK logs from the start of log_kernel and leaves its end address at header + 0x200 */
@@ -92,6 +94,7 @@ static int __init early_ramcon_setup(struct earlycon_device *device, const char 
 	writel(PMSG_SIG, base);
 
 	log_write(mark, sizeof(mark) - 1);
+	log_write(linux_banner, strlen(linux_banner));
 	device->con->write = ramcon_write;
 	return 0;
 }
