@@ -7152,6 +7152,18 @@
 		};
 	};
 
+	fragment@cpupm {
+		target-path = "/exynos-cpupm";
+
+		__overlay__ {
+
+			// A13 EL3 needs psci-index 0x100 in the CPU_SUSPEND param for SICD; 5.10 only arms it through PMUCAL
+			sicd {
+				entry-allowed = "";
+			};
+		};
+	};
+
 	fragment@cpus {
 		target-path = "/cpus";
 
