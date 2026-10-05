@@ -18,6 +18,7 @@
 #include <linux/of_device.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/psci.h>
 
 //#include <linux/ems.h>
 #include <linux/sched/clock.h>
@@ -1817,6 +1818,8 @@ static int exynos_cpupm_probe(struct platform_device *pdev)
 	register_vendor_hooks();
 
 	notify_cpupm_init_to_el3(pdev);
+
+	psci_idle_release_gated_states();
 
 	cpupm_init_time = ktime_get();
 
