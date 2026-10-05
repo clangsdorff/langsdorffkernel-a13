@@ -7152,6 +7152,14 @@
 		};
 	};
 
+	fragment@idle {
+		target-path = "/idle-states/ananke-cpu-sleep";
+
+		__overlay__ {
+			samsung,cpupm-gated;
+		};
+	};
+
 	fragment@cpupm {
 		target-path = "/exynos-cpupm";
 

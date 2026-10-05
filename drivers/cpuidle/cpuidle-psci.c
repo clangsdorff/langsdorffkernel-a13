@@ -38,6 +38,7 @@ struct psci_cpuidle_data {
 static DEFINE_PER_CPU_READ_MOSTLY(struct psci_cpuidle_data, psci_cpuidle_data);
 static DEFINE_PER_CPU(u32, domain_state);
 static bool psci_cpuidle_use_cpuhp;
+static DEFINE_PER_CPU(struct cpuidle_driver *, psci_gated_drv);
 
 void psci_set_domain_state(u32 state)
 {
@@ -161,6 +162,49 @@ static int psci_enter_idle_state(struct cpuidle_device *dev,
 
 	return psci_enter_state(idx, state[idx]);
 }
+
+/* A13 EL3 powers the core off without the PMUCAL setup exynos-cpupm does, so the core never wakes on IPI */
+static void psci_idle_gate_states(struct cpuidle_driver *drv, int cpu)
+{
+	struct device_node *cpu_node = of_cpu_device_node_get(cpu);
+	struct device_node *state_node;
+	int i;
+
+	if (!cpu_node)
+		return;
+
+	for (i = 1; i < drv->state_count; i++) {
+		state_node = of_parse_phandle(cpu_node, "cpu-idle-states", i - 1);
+		if (!state_node)
+			break;
+		if (of_property_read_bool(state_node, "samsung,cpupm-gated")) {
+			drv->states[i].flags |= CPUIDLE_FLAG_UNUSABLE;
+			per_cpu(psci_gated_drv, cpu) = drv;
+		}
+		of_node_put(state_node);
+	}
+	of_node_put(cpu_node);
+}
+
+void psci_idle_release_gated_states(void)
+{
+	struct cpuidle_driver *drv;
+	int cpu, i;
+
+	for_each_possible_cpu(cpu) {
+		drv = per_cpu(psci_gated_drv, cpu);
+		if (!drv)
+			continue;
+		for (i = 1; i < drv->state_count; i++) {
+			if (!(drv->states[i].flags & CPUIDLE_FLAG_UNUSABLE))
+				continue;
+			drv->states[i].flags &= ~CPUIDLE_FLAG_UNUSABLE;
+			cpuidle_driver_state_disabled(drv, i, false);
+		}
+		per_cpu(psci_gated_drv, cpu) = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(psci_idle_release_gated_states);
 
 static const struct of_device_id psci_idle_state_match[] = {
 	{ .compatible = "arm,idle-state",
@@ -344,6 +388,8 @@ static int psci_idle_init_cpu(struct device *dev, int cpu)
 		pr_err("CPU %d failed to PSCI idle\n", cpu);
 		return ret;
 	}
+
+	psci_idle_gate_states(drv, cpu);
 
 	ret = cpuidle_register(drv, NULL);
 	if (ret)

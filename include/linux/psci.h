@@ -59,4 +59,10 @@ static inline bool acpi_psci_present(void) { return false; }
 static inline bool acpi_psci_use_hvc(void) {return false; }
 #endif
 
+#ifdef CONFIG_ARM_PSCI_CPUIDLE
+void psci_idle_release_gated_states(void);
+#else
+static inline void psci_idle_release_gated_states(void) { }
+#endif
+
 #endif /* __LINUX_PSCI_H */
