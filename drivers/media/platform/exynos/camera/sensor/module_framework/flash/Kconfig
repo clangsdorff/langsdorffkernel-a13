@@ -59,3 +59,10 @@ config CAMERA_FLASH_KTD2692_OBJ
         default n
         help
           Use to build KTD2692 driver.
+
+config CAMERA_FLASH_AW36518_OBJ
+        tristate "Use AW36518"
+	depends on CAMERA_FLASH_SELECT && LEDS_AW36518
+        default n
+        help
+          Use to build AW36518 driver.
