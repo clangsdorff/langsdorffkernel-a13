@@ -11,3 +11,5 @@ himax_831xx.ko
 ovt_td4150_spi.ko
 input_booster_lkm.ko
 sec_debug_coredump.ko
+leds-aw36518.ko
+is-flash-aw36518.ko
