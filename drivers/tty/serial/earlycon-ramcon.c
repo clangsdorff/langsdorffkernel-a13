@@ -66,9 +66,21 @@ static void pmsg_write(const char *s, unsigned int n)
 	writel(pmsg_size, base + 8);
 }
 
+/* once debug-snapshot registers its "dss" console it owns log_kernel and header + 0x200 */
+static bool dss_owns_log(void)
+{
+	struct console *c;
+
+	for_each_console(c)
+		if ((c->flags & CON_ENABLED) && !strcmp(c->name, "dss"))
+			return true;
+	return false;
+}
+
 static void ramcon_write(struct console *con, const char *s, unsigned int n)
 {
-	log_write(s, n);
+	if (!dss_owns_log())
+		log_write(s, n);
 	pmsg_write(s, n);
 }
 
