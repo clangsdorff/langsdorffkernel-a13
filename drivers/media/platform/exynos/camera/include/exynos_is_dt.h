@@ -364,6 +364,7 @@
 #define SENSOR_NAME_OV02A10		216
 #define SENSOR_NAME_HI847		217
 #define SENSOR_NAME_OV32A1Q     218
+#define SENSOR_NAME_GC08A3		219
 
 /* 256~: currently not used */
 #define SENSOR_NAME_CUSTOM		301
