@@ -17,7 +17,7 @@
 #include "is-groupmgr.h"
 #include "is-interface.h"
 
-#if defined(CONFIG_EXYNOS_PM_QOS_MODULE)
+#if IS_ENABLED(CONFIG_EXYNOS_PM_QOS)
 #include <soc/samsung/exynos_pm_qos.h>
 #else
 #include <linux/pm_qos.h>
