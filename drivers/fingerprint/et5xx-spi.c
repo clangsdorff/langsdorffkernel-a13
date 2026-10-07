@@ -1035,11 +1035,19 @@ static ssize_t resetcnt_store(struct device *dev,
 	return size;
 }
 
+/* flagship FOD ports read this node; same value as the A14 gw3x driver */
+static ssize_t position_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "1\n");
+}
+
 static DEVICE_ATTR_RO(bfs_values);
 static DEVICE_ATTR_RO(type_check);
 static DEVICE_ATTR_RO(vendor);
 static DEVICE_ATTR_RO(name);
 static DEVICE_ATTR_RO(adm);
+static DEVICE_ATTR_RO(position);
 static DEVICE_ATTR_RW(intcnt);
 static DEVICE_ATTR_RW(resetcnt);
 
@@ -1049,6 +1057,7 @@ static struct device_attribute *fp_attrs[] = {
 	&dev_attr_vendor,
 	&dev_attr_name,
 	&dev_attr_adm,
+	&dev_attr_position,
 	&dev_attr_intcnt,
 	&dev_attr_resetcnt,
 	NULL,
