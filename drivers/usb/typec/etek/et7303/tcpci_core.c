@@ -33,7 +33,7 @@
 #include <linux/usb/typec/etek/et7303/pd_dpm_core.h>
 #endif /* CONFIG_USB_POWER_DELIVERY */
 
-#if defined(CONFIG_PDIC_NOTIFIER)
+#if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
 #include <linux/usb/typec/common/pdic_core.h>
 #include <linux/usb/typec/common/pdic_sysfs.h>
 #include <linux/usb/typec/common/pdic_notifier.h>
@@ -397,7 +397,7 @@ static ssize_t tcpc_store_property(struct device *dev,
 	return count;
 }
 
-#if defined(CONFIG_PDIC_NOTIFIER)
+#if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
 static int tcpc_sysfs_get_prop(struct _pdic_data_t *ppdic_data,
 					enum pdic_sysfs_property prop,
 					char *buf)
@@ -557,7 +557,7 @@ struct tcpc_device *tcpc_device_register(struct device *parent,
 {
 	struct tcpc_device *tcpc;
 	int ret = 0;
-#if defined(CONFIG_PDIC_NOTIFIER)
+#if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
 	ppdic_data_t ppdic_data;
 	ppdic_sysfs_property_t ppdic_sysfs_prop;
 #endif /* CONFIG_PDIC_NOTIFIER */
@@ -569,7 +569,7 @@ struct tcpc_device *tcpc_device_register(struct device *parent,
 		return NULL;
 	}
 
-#if defined(CONFIG_PDIC_NOTIFIER)
+#if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
 	get_pdic_device();
 	ppdic_data = devm_kzalloc(parent, sizeof(pdic_data_t), GFP_KERNEL);
 
@@ -644,7 +644,7 @@ struct tcpc_device *tcpc_device_register(struct device *parent,
 	tcpc->pp_data = pdic_policy_init(&tcpc->ic_data);
 #endif /* CONFIG_PDIC_POLICY */
 
-#if defined(CONFIG_PDIC_NOTIFIER)
+#if IS_ENABLED(CONFIG_PDIC_NOTIFIER)
 	ppdic_sysfs_prop->get_property = tcpc_sysfs_get_prop;
 	ppdic_sysfs_prop->set_property = tcpc_sysfs_set_prop;
 	ppdic_sysfs_prop->property_is_writeable = tcpc_sysfs_is_writeable;

@@ -18,7 +18,7 @@
 #include <linux/of.h>
 #include "syv660_charger.h"
 #include "../../common/sec_charging_common.h"
-#if defined(CONFIG_VBUS_NOTIFIER)
+#if IS_ENABLED(CONFIG_VBUS_NOTIFIER)
 #include <linux/vbus_notifier.h>
 #endif
 
@@ -1493,7 +1493,7 @@ static int sy6970_get_chip_version(struct sy6970_device *bq)
 	return 0;
 }
 
-#if defined(CONFIG_VBUS_NOTIFIER)
+#if IS_ENABLED(CONFIG_VBUS_NOTIFIER)
 static int vbus_handle_notification(struct notifier_block *nb,
 		unsigned long action, void *data)
 {
@@ -1711,7 +1711,7 @@ static int sy6970_probe(struct i2c_client *client,
 	sec_chg_set_dev_init(SC_DEV_MAIN_CHG);
 #endif
 
-#if defined(CONFIG_VBUS_NOTIFIER)
+#if IS_ENABLED(CONFIG_VBUS_NOTIFIER)
 	vbus_notifier_register(&bq->vbus_nb,
 		vbus_handle_notification, VBUS_NOTIFY_DEV_CHARGER);
 #endif

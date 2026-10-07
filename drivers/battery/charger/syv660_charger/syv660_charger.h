@@ -98,7 +98,7 @@ struct sy6970_device {
 	struct notifier_block usb_nb;
 	struct work_struct usb_work;
 	unsigned long usb_event;
-#if defined(CONFIG_VBUS_NOTIFIER)
+#if IS_ENABLED(CONFIG_VBUS_NOTIFIER)
 	struct notifier_block vbus_nb;
 #endif
 
