@@ -4839,6 +4839,9 @@
 				gc02m1_avdd-supply = <0x50>;
 				gc02m1_dvdd-supply = <0xffffffff 0x06 0x01>;
 				status = "okay";
+				rom_type = <0x03>;
+				rom_id = <0x02>;
+				rom_cal_index = <0x00>;
 				pinctrl-names = "pin0", "pin1", "pin2", "release";
 				pinctrl-0;
 				pinctrl-1 = <0xffffffff>;
@@ -5471,6 +5474,9 @@
 				gc5035_avdd-supply = <0x51>;
 				gc5035_dvdd-supply = <0x52>;
 				status = "okay";
+				rom_type = <0x03>;
+				rom_id = <0x04>;
+				rom_cal_index = <0x00>;
 				pinctrl-names = "pin0", "pin1", "pin2", "release";
 				pinctrl-0;
 				pinctrl-1 = <0xffffffff>;
@@ -5810,6 +5816,9 @@
 				gc08a3_avdd-supply = <0x53>;
 				gc08a3_dvdd-supply = <0x54>;
 				status = "okay";
+				rom_type = <0x03>;
+				rom_id = <0x01>;
+				rom_cal_index = <0x00>;
 				pinctrl-names = "pin0", "pin1", "pin2", "release";
 				pinctrl-0;
 				pinctrl-1 = <0xffffffff>;
@@ -6815,14 +6824,52 @@
 			pinctrl-1 = <0x5a>;
 			pinctrl-2 = <0x59>;
 
-			// use_sensor_otp dropped until 5.10 has GC08A3/GC02M1/GC5035 OTP readers
 			is-gc08a3@62 {
 				compatible = "samsung,exynos-is-cis-gc08a3";
 				reg = <0x31>;
 				id = <0x01>;
 				sensor_f_number = <0xdc>;
 				setfile = "setA";
+				use_sensor_otp;
+				rom_position = <0x01>;
 				use_initial_ae;
+			};
+
+			front_otprom@1 {
+				compatible = "samsung,front-otprom-i2c";
+				reg = <0x01>;
+				rom_power_position = <0x01>;
+				rom_size = <0x1c84>;
+				cal_map_es_version = <0x01>;
+				camera_module_es_version = "A";
+				header_crc_check_list = <0x00 0x49 0x4a>;
+				crc_check_list = <0x4e 0x45b 0x45c>;
+				rom_header_version_start_addr = <0x0a>;
+				rom_header_cal_data_start_addr = <0x00>;
+				rom_header_cal_map_ver_start_addr = <0x16>;
+				rom_header_project_name_start_addr = <0x1e>;
+				rom_header_module_id_addr = <0x2e>;
+				rom_header_sensor_id_addr = <0x38>;
+				rom_awb_master_addr = <0x58>;
+				use_standard_cal;
+				rom_standard_cal_start_addr = <0x4e>;
+				rom_standard_cal_end_addr = <0x45f>;
+				rom_standard_cal_module_crc_addr = <0x45c>;
+				rom_standard_cal_module_checksum_len = <0x40e>;
+				rom_header_standard_cal_end_addr = <0x04>;
+				rom_standard_cal_sec2lsi_end_addr = <0xe2df>;
+				rom_awb_start_addr = <0x58>;
+				rom_awb_end_addr = <0x5f>;
+				rom_shading_start_addr = <0x62>;
+				rom_shading_end_addr = <0x45a>;
+				rom_awb_sec2lsi_start_addr = <0x58>;
+				rom_awb_sec2lsi_end_addr = <0x5f>;
+				rom_awb_sec2lsi_checksum_addr = <0x64>;
+				rom_awb_sec2lsi_checksum_len = <0x0c>;
+				rom_shading_sec2lsi_start_addr = <0x68>;
+				rom_shading_sec2lsi_end_addr = <0x1a4f>;
+				rom_shading_sec2lsi_checksum_addr = <0x1a54>;
+				rom_shading_sec2lsi_checksum_len = <0x19ec>;
 			};
 
 			is-gc02m1@20 {
@@ -6831,6 +6878,20 @@
 				id = <0x02>;
 				sensor_f_number = <0xf0>;
 				setfile = "setB";
+				use_sensor_otp;
+				rom_position = <0x02>;
+			};
+
+			rear2_otprom@2 {
+				compatible = "samsung,rear2-otprom-i2c";
+				reg = <0x02>;
+				rom_power_position = <0x02>;
+				rom_size = <0x11>;
+				cal_map_es_version = <0x00>;
+				camera_module_es_version = "M";
+				header_crc_check_list = <0x00 0x0c 0x0d>;
+				rom_header_version_start_addr = <0x00>;
+				rom_header_cal_data_start_addr = <0x00>;
 			};
 
 			is-gc5035@7E {
@@ -6839,6 +6900,45 @@
 				id = <0x03>;
 				sensor_f_number = <0xdc>;
 				setfile = "setB";
+				use_sensor_otp;
+				rom_position = <0x04>;
+			};
+
+			rear3_otprom@3 {
+				compatible = "samsung,rear3-otprom-i2c";
+				reg = <0x03>;
+				rom_power_position = <0x04>;
+				rom_size = <0x1a58>;
+				cal_map_es_version = <0x01>;
+				camera_module_es_version = "A";
+				header_crc_check_list = <0x00 0x49 0x4a>;
+				crc_check_list = <0x4e 0xeb 0xec>;
+				rom_header_version_start_addr = <0x0a>;
+				rom_header_cal_data_start_addr = <0x00>;
+				rom_header_cal_map_ver_start_addr = <0x16>;
+				rom_header_project_name_start_addr = <0x1e>;
+				rom_header_module_id_addr = <0x2e>;
+				rom_header_sensor_id_addr = <0x38>;
+				rom_awb_master_addr = <0x58>;
+				use_standard_cal;
+				rom_standard_cal_start_addr = <0x4e>;
+				rom_standard_cal_end_addr = <0xef>;
+				rom_standard_cal_module_crc_addr = <0xec>;
+				rom_standard_cal_module_checksum_len = <0x9e>;
+				rom_header_standard_cal_end_addr = <0x04>;
+				rom_standard_cal_sec2lsi_end_addr = <0xe2df>;
+				rom_awb_start_addr = <0x58>;
+				rom_awb_end_addr = <0x5f>;
+				rom_shading_start_addr = <0x62>;
+				rom_shading_end_addr = <0xea>;
+				rom_awb_sec2lsi_start_addr = <0x58>;
+				rom_awb_sec2lsi_end_addr = <0x5f>;
+				rom_awb_sec2lsi_checksum_addr = <0x64>;
+				rom_awb_sec2lsi_checksum_len = <0x0c>;
+				rom_shading_sec2lsi_start_addr = <0x68>;
+				rom_shading_sec2lsi_end_addr = <0x1a4f>;
+				rom_shading_sec2lsi_checksum_addr = <0x1a54>;
+				rom_shading_sec2lsi_checksum_len = <0x19ec>;
 			};
 
 			is-gc02m1-macro@20 {
