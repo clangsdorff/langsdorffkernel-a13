@@ -17,7 +17,7 @@
 #define USE_CAMERA_IOVM_BEST_FIT
 
 /***** SUPPORT CAMERA DEFINE *****/
-#define IS_VENDOR_SENSOR_COUNT 4                              /* REAR_0, FRONT_0, REAR_2, REAR_3 */
+#define IS_VENDOR_SENSOR_COUNT 5                              /* A13: REAR_0, FRONT_0, REAR_2, REAR_3, REAR_4 */
 
 //#define REAR_SUB_CAMERA            (SENSOR_POSITION_REAR2)  /* Supported Camera Type for rear bokeh */
 #define REAR_ULTRA_WIDE_CAMERA     (SENSOR_POSITION_REAR3)    /* Supported Camera Type for rear ultra wide */
