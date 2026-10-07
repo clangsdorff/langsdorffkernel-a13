@@ -14,6 +14,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
     env:
       CCACHE_DIR: /home/runner/ccache
       CCACHE_BASEDIR: ${{ github.workspace }}
@@ -63,10 +66,22 @@ jobs:
       with:
         path: ~/ccache
         key: ccache-check-${{ github.sha }}
+    - name: Prune old ccache
+      if: always()
+      env:
+        GH_TOKEN: ${{ github.token }}
+        KEEP: ccache-check-${{ github.sha }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" -k "$KEEP" --json key -q '.[].key' | grep -qx "$KEEP" || exit 0
+        gh cache list -R "$GITHUB_REPOSITORY" -k ccache-check- -L 100 --json id,key -q ".[] | select(.key != \"$KEEP\") | .id" |
+          xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
 
   build:
     needs: check
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
     env:
       CCACHE_DIR: /home/runner/ccache
       CCACHE_BASEDIR: ${{ github.workspace }}
@@ -110,6 +125,15 @@ jobs:
           ~/ccache
           ${{ github.workspace }}/out/.thinlto-cache
         key: ccache-build-${{ github.sha }}
+    - name: Prune old ccache
+      if: always()
+      env:
+        GH_TOKEN: ${{ github.token }}
+        KEEP: ccache-build-${{ github.sha }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" -k "$KEEP" --json key -q '.[].key' | grep -qx "$KEEP" || exit 0
+        gh cache list -R "$GITHUB_REPOSITORY" -k ccache-build- -L 100 --json id,key -q ".[] | select(.key != \"$KEEP\") | .id" |
+          xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
     - name: Upload
       uses: actions/upload-artifact@v7
       with:
