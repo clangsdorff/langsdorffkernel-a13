@@ -422,10 +422,22 @@ static int is_vender_caminfo_sec2lsi_cmd_get_buff(void __user *user_data)
 			memcpy(standard_cal_data, &finfo->backup_standard_cal_data, sizeof(struct rom_standard_cal_data));
 #endif
 		if (standard_cal_data->rom_awb_sec2lsi_start_addr >= 0) {
+			uint32_t user_awb_size = caminfo.awb_size;
+			uint32_t user_lsc_size = caminfo.lsc_size;
+
 			caminfo.awb_size = standard_cal_data->rom_awb_end_addr
 				- standard_cal_data->rom_awb_start_addr + 1;
 			caminfo.lsc_size = standard_cal_data->rom_shading_end_addr
 				- standard_cal_data->rom_shading_start_addr + 1;
+
+			/* the HAL sizes secBuf for its own module's cal map */
+			if (caminfo.awb_size > user_awb_size || caminfo.lsc_size > user_lsc_size) {
+				err("%s: ROM[%d] awb %u lsc %u exceed the HAL buffer (awb %u lsc %u), skipping sec2lsi",
+					__func__, caminfo.camID, caminfo.awb_size, caminfo.lsc_size,
+					user_awb_size, user_lsc_size);
+				ret = -EINVAL;
+				goto EXIT;
+			}
 		}
 
 		if (standard_cal_data->rom_awb_start_addr > 0) {
