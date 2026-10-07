@@ -795,12 +795,15 @@ static int et5xx_parse_dt(struct device *dev, struct et5xx_data *etspi)
 		pr_info("not use btp_regulator\n");
 		etspi->btp_vdd = NULL;
 	} else {
-		etspi->regulator_3p3 = regulator_get(dev, etspi->btp_vdd);
-		if (IS_ERR(etspi->regulator_3p3) ||
-				(etspi->regulator_3p3) == NULL) {
-			pr_info("fail to get regulator_3p3\n");
+		/* s2mpu12 regulators are a module now; plain regulator_get would hand out the dummy */
+		etspi->regulator_3p3 = regulator_get_optional(dev, etspi->btp_vdd);
+		if (IS_ERR(etspi->regulator_3p3)) {
+			retval = PTR_ERR(etspi->regulator_3p3);
 			etspi->regulator_3p3 = NULL;
-			return -EINVAL;
+			if (retval == -ENODEV)
+				return -EPROBE_DEFER;
+			pr_info("fail to get regulator_3p3\n");
+			return retval;
 		}
 		pr_info("btp_regulator ok\n");
 	}
