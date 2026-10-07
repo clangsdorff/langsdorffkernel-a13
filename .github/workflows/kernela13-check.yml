@@ -115,3 +115,73 @@ jobs:
       with:
         name: A13-Kernel
         path: kernel_build/langsdorff@a13*
+
+  vendor:
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Checkout stock vendors
+      uses: actions/checkout@v6
+      with:
+        ref: a13-vendor-stock
+        path: stock
+    - name: Download kernel
+      uses: actions/download-artifact@v8
+      with:
+        name: A13-Kernel
+        path: kernel
+    - name: Restore erofs-utils
+      id: erofs
+      uses: actions/cache@v4
+      with:
+        path: ~/erofs-utils
+        key: erofs-utils-v1.9.4-ubuntu-24.04
+    - name: Install tools
+      run: |
+        sudo apt-get install -y attr zip unzip
+        if [ ! -x ~/erofs-utils/bin/mkfs.erofs ]; then
+          sudo apt-get install -y autoconf automake libtool pkg-config liblz4-dev uuid-dev zlib1g-dev
+          git clone --depth 1 -b v1.9.4 https://git.kernel.org/pub/scm/linux/kernel/git/xiang/erofs-utils.git /tmp/erofs-src
+          (cd /tmp/erofs-src && ./autogen.sh && ./configure --prefix="$HOME/erofs-utils" && make -j$(nproc) && make install)
+        fi
+        echo "$HOME/erofs-utils/bin" >> "$GITHUB_PATH"
+    - name: Verify stock vendors
+      working-directory: stock
+      run: |
+        for z in a13_stock_vendor.zip a14_stock_vendor.zip; do cat "$z".[0-9][0-9] > "$z"; done
+        unzip -q a14_stock_vendor.zip
+        sudo unzip -q a13_stock_vendor.zip -d a13_vendor
+        sha256sum -c SHA256SUMS
+        md5sum -c MD5SUMS
+    - name: Build vendor
+      run: |
+        DLKM=$(ls kernel/*_vendor_dlkm.tar.gz)
+        NAME=$(basename "$DLKM" _vendor_dlkm.tar.gz)_vendor
+        mkdir -p dist
+        sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" "dist/$NAME.img"
+        sudo chown "$(id -u):$(id -g)" "dist/$NAME.img"
+        (cd dist && zip -9 -q "$NAME.zip" "$NAME.img" && rm "$NAME.img")
+        cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar dist/
+        (cd dist && sha256sum * > SHA256SUMS && md5sum $(ls | grep -v SUMS) > MD5SUMS && cat SHA256SUMS MD5SUMS)
+    - name: Upload to gofile
+      working-directory: dist
+      run: |
+        token= folder=
+        for f in *; do
+          args=(-F "file=@$f")
+          [ -n "$folder" ] && args+=(-F "token=$token" -F "folderId=$folder")
+          r=$(curl -sS --fail --retry 3 -m 3600 "${args[@]}" https://upload.gofile.io/uploadfile)
+          [ "$(jq -r .status <<<"$r")" = ok ] || { echo "$f: $r"; exit 1; }
+          [ "$(jq -r .data.md5 <<<"$r")" = "$(md5sum "$f" | cut -d' ' -f1)" ] || { echo "$f: md5 mismatch after upload"; exit 1; }
+          if [ -z "$folder" ]; then
+            token=$(jq -r .data.guestToken <<<"$r")
+            folder=$(jq -r .data.parentFolder <<<"$r")
+            link=$(jq -r .data.downloadPage <<<"$r")
+          fi
+          echo "$f uploaded"
+        done
+        echo "gofile: $link"
+        { echo "### gofile"; echo "$link"; echo '```'; cat SHA256SUMS; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
