@@ -12,3 +12,4 @@ drivers/input/touchscreen/himax/himax_831xx/
 drivers/regulator/s2mpb03/
 drivers/leds/
 drivers/media/platform/exynos/camera/sensor/module_framework/flash/
+drivers/media/platform/exynos/camera/sensor/module_framework/cis/
