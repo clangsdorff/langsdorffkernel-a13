@@ -561,7 +561,7 @@ static int afc_charger_set_voltage(int voltage)
 		return -EAGAIN;
 	}
 
-#if defined(CONFIG_DRV_SAMSUNG)
+#if IS_ENABLED(CONFIG_DRV_SAMSUNG)
 	if (voltage == 0x9 && vt_muic_get_afc_disable()) {
 		pr_err("AFC is disabled by USER\n");
 		return - EINVAL;
