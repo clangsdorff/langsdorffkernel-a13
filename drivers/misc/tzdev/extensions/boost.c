@@ -15,7 +15,7 @@
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
-#include <linux/pm_qos.h>
+#include <soc/samsung/exynos_pm_qos.h>
 
 #include "tzdev_internal.h"
 #include "core/cdev.h"
@@ -49,7 +49,7 @@
 #endif /* TZDEV_BOOST_CLUSTER */
 
 static int tz_boost_users = 0;
-static struct pm_qos_request tz_boost_qos;
+static struct exynos_pm_qos_request tz_boost_qos;
 static unsigned int cpu_boost_mask;
 static DEFINE_MUTEX(tz_boost_lock);
 
@@ -92,7 +92,7 @@ void tz_boost_enable(void)
 
 	if (!tz_boost_users) {
 		tz_hotplug_update_nwd_cpu_mask(cpu_boost_mask);
-		pm_qos_add_request(&tz_boost_qos, TZ_BOOST_CPU_FREQ_MIN,
+		exynos_pm_qos_add_request(&tz_boost_qos, TZ_BOOST_CPU_FREQ_MIN,
 				TZ_BOOST_CPU_FREQ_MAX_DEFAULT_VALUE);
 	}
 
@@ -109,7 +109,7 @@ void tz_boost_disable(void)
 	BUG_ON(tz_boost_users < 0);
 
 	if (!tz_boost_users) {
-		pm_qos_remove_request(&tz_boost_qos);
+		exynos_pm_qos_remove_request(&tz_boost_qos);
 		tz_hotplug_update_nwd_cpu_mask(0x0);
 	}
 
