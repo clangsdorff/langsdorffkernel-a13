@@ -2347,12 +2347,15 @@ static int __init pn547_dev_init(void)
 #else
 	NFC_LOG_INFO("Loading pn547 driver\n");
 #endif
+	NFC_LOG_INFO("%s lpcharge %d\n", __func__, nfc_param_lpcharge);
 #if IS_ENABLED(CONFIG_BATTERY_SAMSUNG) && !defined(CONFIG_NFC_PVDD_LATE_ENABLE)
 	if (lpcharge) {
+#else
+	if (nfc_param_lpcharge == LPM_TRUE) {
+#endif
 		NFC_LOG_ERR("LPM, Do not load nfc driver\n");
 		return 0;
 	}
-#endif
 	ret = i2c_add_driver(&pn547_driver);
 	if (ret)
 		return ret;
@@ -2367,6 +2370,8 @@ module_init(pn547_dev_init);
 static void __exit pn547_dev_exit(void)
 {
 	NFC_LOG_INFO("Unloading pn547 driver\n");
+	if (nfc_param_lpcharge == LPM_TRUE)
+		return;
 #if IS_ENABLED(CONFIG_NFC_PN547_ESE_SUPPORT)
 	p61_dev_exit();
 #endif

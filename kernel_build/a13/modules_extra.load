@@ -16,3 +16,4 @@ leds-aw36518.ko
 is-flash-aw36518.ko
 is-cis-gc02m1.ko
 is-cis-gc08a3.ko
+nfc_sec.ko
