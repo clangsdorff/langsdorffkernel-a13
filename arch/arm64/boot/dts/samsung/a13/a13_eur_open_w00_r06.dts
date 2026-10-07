@@ -3609,6 +3609,7 @@
 				himax,display-coords = <0x438 0x968>;
 				himax,project_name = "A13", "A135";
 				support_aot;
+				support_dex;
 				himax,enable_sysinput_enabled;
 				himax,support_ear_detect_mode;
 				himax,prox_lp_scan_enabled;
