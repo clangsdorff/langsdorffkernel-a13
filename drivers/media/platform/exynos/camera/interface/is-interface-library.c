@@ -949,8 +949,44 @@ int is_lib_logdump(void)
 	return read_cnt;
 }
 
+/* the library log ring is not in last_kmsg; print its tail so the assert reason survives the panic */
+static void is_lib_log_tail_to_kmsg(void)
+{
+	struct is_lib_support *lib = &gPtr_lib_support;
+	ulong debug_kva, end, start, p;
+	char line[256];
+	int n = 0;
+
+	if (!lib->minfo || !lib->log_ptr)
+		return;
+
+	debug_kva = lib->minfo->kvaddr_debug;
+	end = lib->log_ptr;
+	if (end <= debug_kva || end > debug_kva + DEBUG_REGION_SIZE)
+		return;
+	start = max(debug_kva, end - SZ_4K);
+
+	for (p = start; p < end; p++) {
+		char c = *(char *)p;
+
+		if (c == '\n' || c == '\0' || n == sizeof(line) - 1) {
+			line[n] = '\0';
+			if (n)
+				pr_err("[@][LIB-TAIL] %s\n", line);
+			n = 0;
+			continue;
+		}
+		line[n++] = c;
+	}
+	if (n) {
+		line[n] = '\0';
+		pr_err("[@][LIB-TAIL] %s\n", line);
+	}
+}
+
 void is_assert(void)
 {
+	is_lib_log_tail_to_kmsg();
 	is_debug_s2d(false, "DDK/RTA ASSERT");
 }
 
