@@ -1302,4 +1302,6 @@ config DRV_SAMSUNG_PMIC
 	depends on MFD_S2MPU12
 	help
 	 This driver supports a Samsung PMIC sysfs.
+source "drivers/regulator/s2mpb03/Kconfig"
+
 endif
