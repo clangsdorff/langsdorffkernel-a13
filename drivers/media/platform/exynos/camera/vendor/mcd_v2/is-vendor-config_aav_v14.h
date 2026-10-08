@@ -12,7 +12,6 @@
 
 #define SUPPORT_SENSOR_DUALIZATION                            /* Support dualization */
 // #define BOKEH_NO_ROM_SUPPORT                                  /* Support dualization for no rom bokeh sensor */
-#define APPLY_MIRROR_VERTICAL_FLIP                            /* Need To Apply Mirror and Vertical Flip */
 
 #define USE_CAMERA_IOVM_BEST_FIT
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # usage: camhal_patch.py <A14 lib64/libexynoscamera3.so> <out>
 # A14 sensor factory knows only A14 ids: the A13-absent cases (211, 221, 222) become GC5035, GC02M1, GC08A3
+# fasten AE (120 fps start-up mode) is off for HI1336, which wraps GC08A3: GC08A3 has no 120 fps mode
 import hashlib
 import struct
 import sys
@@ -26,6 +27,10 @@ def mov_w2(imm):
     return 0x52800002 | imm << 5
 
 
+def strb_fasten_ae(rt):
+    return 0x391f0260 | rt
+
+
 def bl(pc, target):
     return 0x94000000 | ((target - pc) >> 2) & 0x3ffffff
 
@@ -44,6 +49,7 @@ PATCHES = [
     (0xf2aac, bl(0xf2aac, HI1336_BASE), bl(0xf2aac, GC08A3_BASE)),
     (0xf26d8, bl(0xf26d8, HI556_BASE), bl(0xf26d8, GC5035_BASE)),
     (0xf23c4, bl(0xf23c4, GC02M2_BASE), bl(0xf23c4, GC02M1_BASE)),
+    (0xf2ba4, strb_fasten_ae(10), strb_fasten_ae(31)),
 ]
 
 src, dst = sys.argv[1], sys.argv[2]
