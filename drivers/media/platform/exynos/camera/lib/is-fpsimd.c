@@ -18,46 +18,91 @@
 #if defined(ENABLE_FPSIMD_FOR_USER)
 #if defined(LOCAL_FPSIMD_API)
 #define NUM_OF_MAX_CORE		8
-static struct is_fpsimd_state isr_fpsimd_state[NUM_OF_MAX_CORE];
-static struct is_fpsimd_state func_fpsimd_state[NUM_OF_MAX_CORE];
-static struct is_fpsimd_state task_fpsimd_state[NUM_OF_MAX_CORE];
+/* task -> func -> isr, plus one spare for a DDK that re-enables IRQs inside a call */
+#define IS_FPSIMD_MAX_DEPTH	4
+
+struct is_fpsimd_stack {
+	struct is_fpsimd_state	state[IS_FPSIMD_MAX_DEPTH];
+	unsigned long		irq_flags[IS_FPSIMD_MAX_DEPTH];
+	int			depth;
+};
+
+static struct is_fpsimd_stack fpsimd_stack[NUM_OF_MAX_CORE];
+
+static int is_fpsimd_push(void)
+{
+	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
+	int idx = s->depth;
+
+	if (WARN_ONCE(idx >= IS_FPSIMD_MAX_DEPTH, "is_fpsimd: depth %d overflow\n", idx))
+		return -1;
+
+	s->depth = idx + 1;
+	barrier();
+	is_fpsimd_save_state(&s->state[idx]);
+
+	return idx;
+}
+
+static void is_fpsimd_pop(void)
+{
+	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
+	int idx = s->depth - 1;
+
+	if (WARN_ONCE(idx < 0, "is_fpsimd: unbalanced put\n"))
+		return;
+
+	is_fpsimd_load_state(&s->state[idx]);
+	barrier();
+	s->depth = idx;
+}
 
 void is_fpsimd_get_isr(void)
 {
-	is_fpsimd_save_state(&isr_fpsimd_state[smp_processor_id()]);
+	is_fpsimd_push();
 }
 
 void is_fpsimd_put_isr(void)
 {
-	is_fpsimd_load_state(&isr_fpsimd_state[smp_processor_id()]);
+	is_fpsimd_pop();
 }
 
 void is_fpsimd_get_func(void)
 {
-	local_irq_disable();
+	unsigned long flags;
+	int idx;
+
+	local_irq_save(flags);
 	preempt_disable();
 
-	is_fpsimd_save_state(&func_fpsimd_state[smp_processor_id()]);
+	idx = is_fpsimd_push();
+	if (idx >= 0)
+		fpsimd_stack[smp_processor_id()].irq_flags[idx] = flags;
 }
 
 void is_fpsimd_put_func(void)
 {
-	is_fpsimd_load_state(&func_fpsimd_state[smp_processor_id()]);
+	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
+	unsigned long flags = s->depth > 0 ? s->irq_flags[s->depth - 1] : 0;
+
+	WARN_ONCE(!irqs_disabled(), "is_fpsimd: DDK returned with IRQs enabled\n");
+
+	is_fpsimd_pop();
 
 	preempt_enable();
-	local_irq_enable();
+	local_irq_restore(flags);
 }
 
 void is_fpsimd_get_task(void)
 {
 	preempt_disable();
 
-	is_fpsimd_save_state(&task_fpsimd_state[smp_processor_id()]);
+	is_fpsimd_push();
 }
 
 void is_fpsimd_put_task(void)
 {
-	is_fpsimd_load_state(&task_fpsimd_state[smp_processor_id()]);
+	is_fpsimd_pop();
 
 	preempt_enable();
 }

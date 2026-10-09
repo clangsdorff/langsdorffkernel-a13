@@ -782,9 +782,9 @@ void __nocfi is_lib_vra_os_funcs(void)
 	funcs.lib_in_irq       = is_lib_in_irq;
 
 #ifdef ENABLE_FPSIMD_FOR_USER
-  is_fpsimd_get_func();
-  ((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
-  is_fpsimd_get_func();
+	is_fpsimd_get_func();
+	((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
+	is_fpsimd_put_func();
 #else
 	((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
 #endif
