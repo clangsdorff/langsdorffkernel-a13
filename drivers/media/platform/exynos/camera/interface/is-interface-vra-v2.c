@@ -168,12 +168,21 @@ int __nocfi is_lib_vra_invoke_fwalgs_event(struct is_lib_vra *lib_vra)
 void __nocfi is_lib_vra_task_work(struct kthread_work *work)
 {
 	struct is_task_work *cur_work;
+#ifdef ENABLE_FPSIMD_FOR_USER
+	struct is_fpsimd_task fpsimd;
+#endif
 	struct is_lib_vra *lib_vra;
 
 	cur_work = container_of(work, struct is_task_work, work);
 	lib_vra = (struct is_lib_vra *)cur_work->params;
 
+#ifdef ENABLE_FPSIMD_FOR_USER
+	is_fpsimd_get_task(&fpsimd);
 	cur_work->func((void *)lib_vra);
+	is_fpsimd_put_task(&fpsimd);
+#else
+	cur_work->func((void *)lib_vra);
+#endif
 }
 
 int is_lib_vra_init_task(struct is_lib_vra *lib_vra)
@@ -782,9 +791,9 @@ void __nocfi is_lib_vra_os_funcs(void)
 	funcs.lib_in_irq       = is_lib_in_irq;
 
 #ifdef ENABLE_FPSIMD_FOR_USER
-  is_fpsimd_get_func();
-  ((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
-  is_fpsimd_get_func();
+	is_fpsimd_get_func();
+	((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
+	is_fpsimd_put_func();
 #else
 	((vra_set_os_funcs_t)VRA_LIB_ADDR)((void *)&funcs);
 #endif

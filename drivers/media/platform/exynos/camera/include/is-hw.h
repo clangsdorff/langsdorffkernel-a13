@@ -13,6 +13,7 @@
 #define IS_HW_H
 
 #include <linux/phy/phy.h>
+#include <linux/preempt.h>
 
 #include "is-type.h"
 #include "is-hw-chain.h"
@@ -353,14 +354,19 @@ struct is_fpsimd_state {
 };
 
 #if defined(ENABLE_FPSIMD_FOR_USER)
+struct is_fpsimd_task {
+	struct preempt_notifier	pn;
+	struct is_fpsimd_state	state;
+};
+
 extern void is_fpsimd_save_state(struct is_fpsimd_state *state);
 extern void is_fpsimd_load_state(struct is_fpsimd_state *state);
 void is_fpsimd_get_isr(void);
 void is_fpsimd_put_isr(void);
 void is_fpsimd_get_func(void);
 void is_fpsimd_put_func(void);
-void is_fpsimd_get_task(void);
-void is_fpsimd_put_task(void);
+void is_fpsimd_get_task(struct is_fpsimd_task *t);
+void is_fpsimd_put_task(struct is_fpsimd_task *t);
 void is_fpsimd_set_task_using(struct task_struct *t);
 void is_fpsimd_probe(void);
 #endif
