@@ -6052,6 +6052,8 @@ static ssize_t enabled_store(struct device *dev, struct device_attribute *attr,
 
 	input_info(true, ts->dev, "%s: %d %d\n", __func__, buff[0], buff[1]);
 
+	ts->sysinput_seen = true;
+
 	if (buff[0] == LCD_ON || buff[0] == LCD_DOZE || buff[0] == LCD_DOZE_SUSPEND) {
 		if (buff[1] == LCD_EARLY_EVENT) {
 			ts->pdata->early_resume(ts->dev);
