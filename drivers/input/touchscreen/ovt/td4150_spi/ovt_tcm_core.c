@@ -39,6 +39,9 @@
 #include <linux/interrupt.h>
 #include <linux/regulator/consumer.h>
 #include "ovt_tcm_core.h"
+#if IS_ENABLED(CONFIG_FB)
+#include <linux/fb.h>
+#endif
 
 /* #define RESET_ON_RESUME */
 
@@ -3707,6 +3710,43 @@ static int ovt_stui_tsp_type(void)
 }
 #endif
 
+#if IS_ENABLED(CONFIG_FB)
+static void ovt_tcm_fb_resume_work(struct work_struct *work)
+{
+	struct ovt_tcm_hcd *tcm_hcd = container_of(work, struct ovt_tcm_hcd, fb_resume_work);
+
+	ovt_tcm_early_resume(&tcm_hcd->pdev->dev);
+	ovt_tcm_resume(&tcm_hcd->pdev->dev);
+}
+
+static int ovt_tcm_fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
+{
+	struct ovt_tcm_hcd *tcm_hcd = container_of(self, struct ovt_tcm_hcd, fb_notif);
+	struct fb_event *evdata = data;
+	int *blank;
+
+	if (tcm_hcd->sysinput_seen || atomic_read(&tcm_hcd->shutdown))
+		return 0;
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
+		blank = evdata->data;
+		switch (*blank) {
+		case FB_BLANK_POWERDOWN:
+			cancel_work_sync(&tcm_hcd->fb_resume_work);
+			ovt_tcm_early_suspend(&tcm_hcd->pdev->dev);
+			ovt_tcm_suspend(&tcm_hcd->pdev->dev);
+			break;
+		case FB_BLANK_UNBLANK:
+			schedule_work(&tcm_hcd->fb_resume_work);
+			break;
+		default:
+			break;
+		}
+	}
+	return 0;
+}
+#endif
+
 static int ovt_tcm_probe(struct platform_device *pdev)
 {
 	int retval;
@@ -3951,6 +3991,14 @@ static int ovt_tcm_probe(struct platform_device *pdev)
 	complete_all(&tcm_hcd->resume_done);
 
 	g_tcm_hcd = tcm_hcd;
+
+#if IS_ENABLED(CONFIG_FB)
+	INIT_WORK(&tcm_hcd->fb_resume_work, ovt_tcm_fb_resume_work);
+	tcm_hcd->fb_notif.notifier_call = ovt_tcm_fb_notifier_callback;
+	if (fb_register_client(&tcm_hcd->fb_notif))
+		input_err(true, tcm_hcd->pdev->dev.parent, "register fb_notifier failed\n");
+#endif
+
 #if IS_ENABLED(CONFIG_INPUT_SEC_SECURE_TOUCH)
 	if (sysfs_create_group(&tcm_hcd->input_dev->dev.kobj, &secure_attr_group) < 0)
 		input_err(true, tcm_hcd->pdev->dev.parent, "%s: do not make secure group\n", __func__);
@@ -4034,6 +4082,11 @@ static int ovt_tcm_remove(struct platform_device *pdev)
 
 	input_info(true, pdev->dev.parent, "%s\n", __func__);
 	atomic_set(&tcm_hcd->shutdown, 1);
+
+#if IS_ENABLED(CONFIG_FB)
+	fb_unregister_client(&tcm_hcd->fb_notif);
+	cancel_work_sync(&tcm_hcd->fb_resume_work);
+#endif
 
 	if (tcm_hcd->irq_enabled && bdata->irq_gpio >= 0) {
 		disable_irq(tcm_hcd->irq);

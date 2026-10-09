@@ -16,6 +16,9 @@
 #include "himax_common.h"
 #include "himax_platform_SPI.h"
 #include <linux/spi/spi.h>
+#if IS_ENABLED(CONFIG_FB)
+#include <linux/fb.h>
+#endif
 
 
 int i2c_error_count;
@@ -1088,6 +1091,43 @@ static int himax_common_early_resume(struct device *dev)
 }
 #endif
 
+#if IS_ENABLED(CONFIG_FB)
+static void himax_fb_resume_work(struct work_struct *work)
+{
+	struct himax_ts_data *ts = container_of(work, struct himax_ts_data, fb_resume_work);
+
+	himax_common_early_resume(ts->dev);
+	himax_common_late_resume(ts->dev);
+}
+
+static int himax_fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
+{
+	struct himax_ts_data *ts = container_of(self, struct himax_ts_data, fb_notif);
+	struct fb_event *evdata = data;
+	int *blank;
+
+	if (ts->sysinput_seen || ts->shutdown)
+		return 0;
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
+		blank = evdata->data;
+		switch (*blank) {
+		case FB_BLANK_POWERDOWN:
+			cancel_work_sync(&ts->fb_resume_work);
+			himax_common_early_suspend(ts->dev);
+			himax_common_late_suspend(ts->dev);
+			break;
+		case FB_BLANK_UNBLANK:
+			schedule_work(&ts->fb_resume_work);
+			break;
+		default:
+			break;
+		}
+	}
+	return 0;
+}
+#endif
+
 static int himax_reboot_notifier(struct notifier_block *this,
 		unsigned long code, void *unused)
 {
@@ -1288,6 +1328,13 @@ int himax_chip_common_probe(struct spi_device *spi)
 	KE("%s: panel_notifier_register %d\n", __func__, ret);
 #endif
 
+#if IS_ENABLED(CONFIG_FB)
+	INIT_WORK(&ts->fb_resume_work, himax_fb_resume_work);
+	ts->fb_notif.notifier_call = himax_fb_notifier_callback;
+	if (fb_register_client(&ts->fb_notif))
+		E("%s: register fb_notifier failed\n", __func__);
+#endif
+
 #if SEC_LPWG_DUMP
 	himax_lpwg_dump_buf_init();
 #endif
@@ -1315,6 +1362,10 @@ int himax_chip_common_remove(struct spi_device *spi)
 #endif
 #if (IS_ENABLED(CONFIG_EXYNOS_DPU30) || IS_ENABLED(CONFIG_DRM_SAMSUNG_DPU)) && IS_ENABLED(CONFIG_PANEL_NOTIFY)
  	panel_notifier_unregister(&ts->panel_nb);
+#endif
+#if IS_ENABLED(CONFIG_FB)
+	fb_unregister_client(&ts->fb_notif);
+	cancel_work_sync(&ts->fb_resume_work);
 #endif
 	himax_pinctrl_configure(ts, false);
 	msleep(ts->pdata->one_frame_delay);
