@@ -1251,6 +1251,8 @@ static ssize_t enabled_store(struct device *dev, struct device_attribute *attr,
 
 	input_info(true, tcm_hcd->pdev->dev.parent, "%s: %d %d\n", __func__, buff[0], buff[1]);
 
+	tcm_hcd->sysinput_seen = true;
+
 	/* handle same sequence : buff[0] = DISPLAY_STATE_ON, DISPLAY_STATE_DOZE, DISPLAY_STATE_DOZE_SUSPEND */
 	if (buff[0] == DISPLAY_STATE_DOZE || buff[0] == DISPLAY_STATE_DOZE_SUSPEND)
 		buff[0] = DISPLAY_STATE_ON;

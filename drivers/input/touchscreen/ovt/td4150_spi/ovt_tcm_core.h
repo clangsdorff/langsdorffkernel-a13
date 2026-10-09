@@ -602,6 +602,11 @@ struct ovt_tcm_hcd {
 	bool lcdoff_test;
 	const struct ovt_tcm_hw_interface *hw_if;
 	int USB_detect_flag;
+#if IS_ENABLED(CONFIG_FB)
+	struct notifier_block fb_notif;
+	struct work_struct fb_resume_work;
+#endif
+	bool sysinput_seen;
 #if IS_ENABLED(CONFIG_VBUS_NOTIFIER)
 	struct work_struct usb_notifier_work;
 	struct workqueue_struct *usb_notifier_workqueue;
