@@ -2517,7 +2517,7 @@ int is_video_s_ctrl(struct file *file,
 		is_resource_dump();
 
 		if (ctrl->value)
-			panic("intentional panic from camera HAL");
+			err("camera HAL requested a panic, ignored");
 		break;
 	case V4L2_CID_IS_DVFS_CLUSTER0:
 	case V4L2_CID_IS_DVFS_CLUSTER1:
