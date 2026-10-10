@@ -358,6 +358,13 @@ static int is_ischain_isp_tag(struct is_subdev *subdev,
 	if (IS_NULL_CROP(incrop))
 		*incrop = inparm;
 
+	if ((!incrop->w || !incrop->h) && inparm.w && inparm.h) {
+		msrwarn("in_crop [%d, %d, %d, %d] -> [%d, %d, %d, %d]\n", device, subdev, frame,
+			incrop->x, incrop->y, incrop->w, incrop->h,
+			inparm.x, inparm.y, inparm.w, inparm.h);
+		*incrop = inparm;
+	}
+
 	queue = GET_SUBDEV_QUEUE(subdev);
 	if (!queue) {
 		merr("queue is NULL", device);
