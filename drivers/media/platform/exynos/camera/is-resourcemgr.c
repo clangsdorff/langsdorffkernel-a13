@@ -342,6 +342,12 @@ static int is_resourcemgr_alloc_mem(struct is_resourcemgr *resourcemgr)
 #if !defined(ENABLE_DYNAMIC_MEM) && defined(ENABLE_TNR)
 	size_t tnr_size = TNR_DMA_SIZE;
 #endif
+#if defined(ENABLE_CLOG_RESERVED_MEM)
+	/* cdump() writes DEBUG_DUMP_SIZE past the library log region */
+	size_t debug_size = DEBUG_REGION_SIZE + DEBUG_DUMP_SIZE;
+#else
+	size_t debug_size = DEBUG_REGION_SIZE + 0x10;
+#endif
 	int i;
 
 	minfo->total_size = 0;
@@ -367,12 +373,12 @@ static int is_resourcemgr_alloc_mem(struct is_resourcemgr *resourcemgr)
 
 	/* library logging */
 	if (!IS_ENABLED(CLOG_RESERVED_MEM)) {
-		minfo->pb_debug = mem->contig_alloc(DEBUG_REGION_SIZE + 0x10);
+		minfo->pb_debug = mem->contig_alloc(debug_size);
 		if (IS_ERR_OR_NULL(minfo->pb_debug)) {
 			/* retry by ION */
 			minfo->pb_debug = CALL_PTR_MEMOP(mem, alloc,
 						mem->priv,
-						DEBUG_REGION_SIZE + 0x10,
+						debug_size,
 						NULL, 0);
 			if (IS_ERR_OR_NULL(minfo->pb_debug)) {
 				err("failed to allocate buffer for DEBUG_REGION");
