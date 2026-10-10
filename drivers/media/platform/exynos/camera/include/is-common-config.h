@@ -90,10 +90,10 @@ extern int debug_mem;
 /* #define DEBUG_HW_SIZE */
 #define DBG_STREAM_ID ((1 << IS_STREAM_COUNT) - 1)
 /* #define DBG_JITTER */
-#define FW_PANIC_ENABLE
+/* #define FW_PANIC_ENABLE */
 /* #define SENSOR_PANIC_ENABLE */
-#define OVERFLOW_PANIC_ENABLE_ISCHAIN
-#define OVERFLOW_PANIC_ENABLE_CSIS
+/* #define OVERFLOW_PANIC_ENABLE_ISCHAIN */
+/* #define OVERFLOW_PANIC_ENABLE_CSIS */
 #define ENABLE_KERNEL_LOG_DUMP
 /* #define FIXED_FPS_DEBUG */
 /* #define FIXED_TDNR_NOISE_INDEX */

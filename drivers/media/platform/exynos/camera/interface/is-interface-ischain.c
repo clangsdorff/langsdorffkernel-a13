@@ -1515,7 +1515,13 @@ IS_TIMER_FUNC(interface_timer)
 			print_framemgr_spinlock_usage(core);
 
 			merr("[@] camera firmware panic!!!", device);
+#ifdef FW_PANIC_ENABLE
 			is_debug_s2d(true, "IS_SHOT_CMD_TIMEOUT");
+#elif defined(ENABLE_CLOG_RESERVED_MEM)
+			is_resource_cdump();
+#else
+			is_resource_dump();
+#endif
 
 			return;
 		}
