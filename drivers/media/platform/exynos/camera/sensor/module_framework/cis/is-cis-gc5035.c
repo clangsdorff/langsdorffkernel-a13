@@ -939,7 +939,7 @@ int sensor_gc5035_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 	FIMC_BUG(!cis);
 	FIMC_BUG(!cis->cis_data);
 
-	if (mode > sensor_gc5035_max_setfile_num) {
+	if (mode >= sensor_gc5035_max_setfile_num) {
 		err("invalid mode(%d)!!", mode);
 		ret = -EINVAL;
 		goto p_err;

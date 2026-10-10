@@ -602,7 +602,7 @@ int sensor_jn1_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 		return ret;
 	}
 
-	if (mode > sensor_jn1_max_setfile_num) {
+	if (mode >= sensor_jn1_max_setfile_num) {
 		err("invalid mode(%d)!!", mode);
 		return -EINVAL;
 	}
@@ -1791,7 +1791,7 @@ void sensor_jn1_cis_data_calc(struct v4l2_subdev *subdev, u32 mode)
 	FIMC_BUG_VOID(!cis);
 	FIMC_BUG_VOID(!cis->cis_data);
 
-	if (mode > sensor_jn1_max_setfile_num) {
+	if (mode >= sensor_jn1_max_setfile_num) {
 		err("invalid mode(%d)!!", mode);
 		return;
 	}
