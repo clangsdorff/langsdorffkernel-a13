@@ -779,7 +779,9 @@ config:
 	if (frame->shot) {
 		param_set->sensor_config.min_target_fps = frame->shot->ctl.aa.aeTargetFpsRange[0];
 		param_set->sensor_config.max_target_fps = frame->shot->ctl.aa.aeTargetFpsRange[1];
-		param_set->sensor_config.frametime = 1000000 / param_set->sensor_config.min_target_fps;
+		if (param_set->sensor_config.min_target_fps)
+			param_set->sensor_config.frametime =
+				1000000 / param_set->sensor_config.min_target_fps;
 		dbg_hw(2, "3aa_shot: min_fps(%d), max_fps(%d), frametime(%d)\n",
 			param_set->sensor_config.min_target_fps,
 			param_set->sensor_config.max_target_fps,
