@@ -309,6 +309,12 @@ static int is_vender_caminfo_sec2lsi_cmd_get_module_info(void __user *user_data)
 		goto EXIT;
 	}
 
+	if (caminfo.camID >= ARRAY_SIZE(sec2lsi_conversion_done)) {
+		err("%s : invalid camID (%u)", __func__, caminfo.camID);
+		ret = -EINVAL;
+		goto EXIT;
+	}
+
 	rom_id = is_vendor_get_rom_id_from_position(caminfo.camID);
 
 	info("%s in for ROM[%d]", __func__, caminfo.camID);
@@ -377,6 +383,12 @@ static int is_vender_caminfo_sec2lsi_cmd_get_buff(void __user *user_data)
 
 	if (copy_from_user((void *)&caminfo, user_data, sizeof(caminfo_romdata_sec2lsi))) {
 		err("%s : failed to copy data from user", __func__);
+		ret = -EINVAL;
+		goto EXIT;
+	}
+
+	if (caminfo.camID >= ARRAY_SIZE(sec2lsi_conversion_done)) {
+		err("%s : invalid camID (%u)", __func__, caminfo.camID);
 		ret = -EINVAL;
 		goto EXIT;
 	}
@@ -503,6 +515,12 @@ static int is_vender_caminfo_sec2lsi_cmd_set_buff(void __user *user_data)
 		goto EXIT;
 	}
 
+	if (caminfo.camID >= ARRAY_SIZE(sec2lsi_conversion_done)) {
+		err("%s : invalid camID (%u)", __func__, caminfo.camID);
+		ret = -EINVAL;
+		goto EXIT;
+	}
+
 	rom_id = is_vendor_get_rom_id_from_position(caminfo.camID);
 	info("%s in for ROM[%d]", __func__, caminfo.camID);
 
@@ -574,6 +592,16 @@ static int is_vender_caminfo_sec2lsi_cmd_set_buff(void __user *user_data)
 				cal_buf[buf_idx + i] = tmp & 0xFF;
 				tmp = tmp >> 8;
 			}
+		}
+
+		if ((standard_cal_data->rom_awb_start_addr > 0 &&
+			caminfo.awb_size > IS_MAX_CAL_SIZE - standard_cal_data->rom_awb_start_addr) ||
+			(standard_cal_data->rom_shading_start_addr > 0 &&
+			caminfo.lsc_size > IS_MAX_CAL_SIZE - standard_cal_data->rom_shading_start_addr)) {
+			err("%s: ROM[%d] awb %u lsc %u do not fit the cal buffer", __func__,
+				caminfo.camID, caminfo.awb_size, caminfo.lsc_size);
+			ret = -EINVAL;
+			goto EXIT;
 		}
 
 		if (standard_cal_data->rom_awb_start_addr > 0) {
