@@ -371,6 +371,13 @@ static int is_ischain_3aa_tag(struct is_subdev *subdev,
 	if (IS_NULL_CROP(incrop))
 		*incrop = inparm;
 
+	if ((!incrop->w || !incrop->h) && inparm.w && inparm.h) {
+		msrwarn("in_crop [%d, %d, %d, %d] -> [%d, %d, %d, %d]\n", device, subdev, frame,
+			incrop->x, incrop->y, incrop->w, incrop->h,
+			inparm.x, inparm.y, inparm.w, inparm.h);
+		*incrop = inparm;
+	}
+
 	if (test_bit(IS_GROUP_OTF_OUTPUT, &group->state)) {
 #ifdef	USE_3AA_CROP_AFTER_BDS
 		otparm.x = taa_param->otf_output.crop_offset_x;
@@ -395,6 +402,22 @@ static int is_ischain_3aa_tag(struct is_subdev *subdev,
 			otcrop->x, otcrop->y, otcrop->w, otcrop->h,
 			otparm.x, otparm.y, otparm.w, otparm.h);
 		*otcrop = otparm;
+	}
+
+	/* a zero BDS output size makes the DDK assert in GetBinningTaascRatio */
+	if (!otcrop->w || !otcrop->h) {
+		struct is_crop fixed = otparm;
+
+		if (!fixed.w || !fixed.h) {
+			fixed.x = 0;
+			fixed.y = 0;
+			fixed.w = incrop->w;
+			fixed.h = incrop->h;
+		}
+		msrwarn("ot_crop [%d, %d, %d, %d] -> [%d, %d, %d, %d]\n", device, subdev, frame,
+			otcrop->x, otcrop->y, otcrop->w, otcrop->h,
+			fixed.x, fixed.y, fixed.w, fixed.h);
+		*otcrop = fixed;
 	}
 
 	if (!COMPARE_CROP(incrop, &inparm) ||
