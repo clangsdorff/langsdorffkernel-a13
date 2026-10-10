@@ -1,8 +1,8 @@
 #!/bin/bash
-# usage: sudo mkvendor_a13.sh <A13 stock vendor.img (f2fs) or its extracted tree> <A14 stock vendor.img (erofs)> <vendor_dlkm.tar.gz> <out.img>
+# usage: sudo mkvendor_a13.sh <A13 stock vendor.img (f2fs) or its extracted tree> <A14 stock vendor.img (erofs)> <vendor_dlkm.tar.gz> <A15 Mali r49p1 tree> <out.img>
 set -euo pipefail
 
-[ $# -eq 4 ] || { sed -n 2p "$0" >&2; exit 2; }
+[ $# -eq 5 ] || { sed -n 2p "$0" >&2; exit 2; }
 [ "$(id -u)" -eq 0 ] || { echo "run as root (xattrs, loop mount)" >&2; exit 1; }
 for t in fsck.erofs mkfs.erofs dump.erofs setfattr getfattr readelf python3; do
     command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }
@@ -11,7 +11,8 @@ done
 A13_IMG=$(realpath "$1")
 A14_IMG=$(realpath "$2")
 DLKM_TAR=$(realpath "$3")
-OUT_IMG=$(realpath -m "$4")
+MALI=$(realpath "$4")
+OUT_IMG=$(realpath -m "$5")
 KIT=$(dirname "$(realpath "$0")")
 OVERLAY=$KIT/vendor_overlay
 FSTAB=$KIT/../fstab.s5e3830
@@ -67,6 +68,20 @@ label vendor_configs_file "$TREE/etc/fstab.s5e3830"
 # A13 has no vendor_dlkm partition; /vendor_dlkm on the A14 system is an empty mount point
 sed -i 's#^\(\s*\)exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor_dlkm/lib/modules input_booster_lkm.ko$#\1exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/vendor_dlkm/lib/modules --all=/vendor/vendor_dlkm/lib/modules/modules.load#' "$TREE/etc/init/init.s5e3830.rc"
 grep -q -- '--all=/vendor/vendor_dlkm/lib/modules/modules.load' "$TREE/etc/init/init.s5e3830.rc"
+
+# Mali userspace and gralloc from A145FXXSEDZF2 to match the r49p1 kbase; cat keeps the inode label
+(cd "$MALI" && find . -type f) | while read -r f; do
+    f=${f#./}
+    if [ -e "$TREE/$f" ]; then
+        cat "$MALI/$f" > "$TREE/$f"
+        continue
+    fi
+    install -m 644 -o 0 -g 0 "$MALI/$f" "$TREE/$f"
+    case $f in
+        lib*/android.hardware.graphics.allocator@*) label vendor_file "$TREE/$f" ;;
+        *) label same_process_hal_file "$TREE/$f" ;;
+    esac
+done
 
 # A14 KeyMint TA links EVP_PKEY_get_raw_private_key, which A13 TEEGRIS lacks; cat keeps the inode label
 ta=00000000-0000-0000-0000-4b45594d5354

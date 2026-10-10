@@ -175,9 +175,10 @@ jobs:
     - name: Verify stock vendors
       working-directory: stock
       run: |
-        for z in a13_stock_vendor.zip a14_stock_vendor.zip; do cat "$z".[0-9][0-9] > "$z"; done
+        for z in a13_stock_vendor.zip a14_stock_vendor.zip a15_mali.zip; do cat "$z".[0-9][0-9] > "$z"; done
         unzip -q a14_stock_vendor.zip
         sudo unzip -q a13_stock_vendor.zip -d a13_vendor
+        unzip -q a15_mali.zip -d a15_mali
         sha256sum -c SHA256SUMS
         md5sum -c MD5SUMS
     - name: Build vendor
@@ -185,7 +186,7 @@ jobs:
         DLKM=$(ls kernel/*_vendor_dlkm.tar.gz)
         NAME=$(basename "$DLKM" _vendor_dlkm.tar.gz)_vendor
         mkdir -p dist
-        sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" "dist/$NAME.img"
+        sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" stock/a15_mali "dist/$NAME.img"
         sudo chown "$(id -u):$(id -g)" "dist/$NAME.img"
         (cd dist && zip -9 -q "$NAME.zip" "$NAME.img" && rm "$NAME.img")
         cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar dist/

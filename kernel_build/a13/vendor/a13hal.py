@@ -15,7 +15,7 @@ SYSTEM_LIBS = {
     "libsync.so", "libui.so", "libion.so", "libdmabufheap.so", "libvndksupport.so", "libpower.so",
     "android.hidl.base@1.0.so", "android.hidl.manager@1.0.so", "android.hidl.token@1.0.so",
     "android.hidl.allocator@1.0.so", "android.hidl.memory@1.0.so", "libhidlmemory.so",
-    "libstagefright_foundation.so", "libcgrouprc.so", "libkeymaster_messages.so",
+    "libstagefright_foundation.so", "libcgrouprc.so", "libkeymaster_messages.so", "libhardware_legacy.so",
 }
 
 def readelf(args, path):
