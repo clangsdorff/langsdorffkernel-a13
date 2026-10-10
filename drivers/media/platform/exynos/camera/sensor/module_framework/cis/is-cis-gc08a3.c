@@ -428,7 +428,7 @@ int sensor_gc08a3_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 	BUG_ON(!cis);
 	BUG_ON(!cis->cis_data);
 
-	if (mode > sensor_gc08a3_max_setfile_num) {
+	if (mode >= sensor_gc08a3_max_setfile_num) {
 		err("invalid mode(%d)!!", mode);
 		ret = -EINVAL;
 		goto p_err;
@@ -1214,7 +1214,7 @@ int sensor_gc08a3_cis_set_frame_rate(struct v4l2_subdev *subdev, u32 min_fps)
 		goto p_err;
 	}
 
-	if (cis_data->sens_config_index_cur <= sensor_gc08a3_max_setfile_num) {
+	if (cis_data->sens_config_index_cur < sensor_gc08a3_max_setfile_num) {
 		pll_info = sensor_gc08a3_pllinfos[cis_data->sens_config_index_cur];
 	} else {
 		err("[MOD:D:%d] %s, current sensor mode is invalid(%d)\n",

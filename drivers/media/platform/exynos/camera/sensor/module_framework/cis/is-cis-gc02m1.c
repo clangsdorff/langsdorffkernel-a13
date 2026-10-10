@@ -395,7 +395,7 @@ int sensor_gc02m1_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 		return ret;
 	}
 
-	if (mode > sensor_gc02m1_max_setfile_num) {
+	if (mode >= sensor_gc02m1_max_setfile_num) {
 		err("invalid mode(%d)!!", mode);
 		ret = -EINVAL;
 		goto p_err;
