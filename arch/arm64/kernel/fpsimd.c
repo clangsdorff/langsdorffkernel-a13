@@ -1249,6 +1249,7 @@ void fpsimd_save_and_flush_cpu_state(void)
 	fpsimd_flush_cpu_state();
 	__put_cpu_fpsimd_context();
 }
+EXPORT_SYMBOL_GPL(fpsimd_save_and_flush_cpu_state);
 
 #ifdef CONFIG_KERNEL_MODE_NEON
 

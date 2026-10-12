@@ -24,12 +24,25 @@
 struct is_fpsimd_stack {
 	struct is_fpsimd_state	state[IS_FPSIMD_MAX_DEPTH];
 	unsigned long		irq_flags[IS_FPSIMD_MAX_DEPTH];
+	bool			saved[IS_FPSIMD_MAX_DEPTH];
 	int			depth;
 };
 
 static struct is_fpsimd_stack fpsimd_stack[NUM_OF_MAX_CORE];
 
-static int is_fpsimd_push(void)
+/* Outside IRQ context the user state goes to the task, so a DDK that sleeps cannot leak its registers */
+static bool is_fpsimd_flush(void)
+{
+	if (in_interrupt() || irqs_disabled())
+		return false;
+
+	local_bh_disable();
+	fpsimd_save_and_flush_cpu_state();
+	local_bh_enable();
+	return true;
+}
+
+static int is_fpsimd_push(bool flushed)
 {
 	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
 	int idx = s->depth;
@@ -39,7 +52,9 @@ static int is_fpsimd_push(void)
 
 	s->depth = idx + 1;
 	barrier();
-	is_fpsimd_save_state(&s->state[idx]);
+	s->saved[idx] = !flushed;
+	if (!flushed)
+		is_fpsimd_save_state(&s->state[idx]);
 
 	return idx;
 }
@@ -52,14 +67,15 @@ static void is_fpsimd_pop(void)
 	if (WARN_ONCE(idx < 0, "is_fpsimd: unbalanced put\n"))
 		return;
 
-	is_fpsimd_load_state(&s->state[idx]);
+	if (s->saved[idx])
+		is_fpsimd_load_state(&s->state[idx]);
 	barrier();
 	s->depth = idx;
 }
 
 void is_fpsimd_get_isr(void)
 {
-	is_fpsimd_push();
+	is_fpsimd_push(false);
 }
 
 void is_fpsimd_put_isr(void)
@@ -70,12 +86,14 @@ void is_fpsimd_put_isr(void)
 void is_fpsimd_get_func(void)
 {
 	unsigned long flags;
+	bool flushed;
 	int idx;
 
-	local_irq_save(flags);
 	preempt_disable();
+	flushed = is_fpsimd_flush();
+	local_irq_save(flags);
 
-	idx = is_fpsimd_push();
+	idx = is_fpsimd_push(flushed);
 	if (idx >= 0)
 		fpsimd_stack[smp_processor_id()].irq_flags[idx] = flags;
 }
@@ -89,15 +107,15 @@ void is_fpsimd_put_func(void)
 
 	is_fpsimd_pop();
 
-	preempt_enable();
 	local_irq_restore(flags);
+	preempt_enable();
 }
 
 void is_fpsimd_get_task(void)
 {
 	preempt_disable();
 
-	is_fpsimd_push();
+	is_fpsimd_push(is_fpsimd_flush());
 }
 
 void is_fpsimd_put_task(void)
