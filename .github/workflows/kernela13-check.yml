@@ -187,6 +187,9 @@ jobs:
         mkdir -p dist
         sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" "dist/$NAME.img"
         sudo chown "$(id -u):$(id -g)" "dist/$NAME.img"
+        python3 kernel_build/avbtool add_hashtree_footer --image "dist/$NAME.img" --partition_name vendor \
+          --hash_algorithm sha256 --algorithm SHA256_RSA4096 \
+          --key kernel_build/mkbootimg/gki/testdata/testkey_rsa4096.pem --do_not_generate_fec
         (cd dist && zip -9 -q "$NAME.zip" "$NAME.img" && rm "$NAME.img")
         cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar dist/
         (cd dist && sha256sum * > SHA256SUMS && md5sum $(ls | grep -v SUMS) > MD5SUMS && cat SHA256SUMS MD5SUMS)
