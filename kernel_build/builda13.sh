@@ -33,6 +33,7 @@ VDLKM_DIR="$TMPDIR/vendor_dlkm/lib/modules"
 MKBOOTIMG="$(pwd)/kernel_build/mkbootimg/mkbootimg.py"
 MKDTBOIMG="$(pwd)/kernel_build/dtb/mkdtboimg.py"
 AVBTOOL="$(pwd)/kernel_build/avbtool"
+AVB_KEY="${AVB_KEY:-$(pwd)/kernel_build/mkbootimg/gki/testdata/testkey_rsa4096.pem}"
 
 OUT_NAME="langsdorff${XY_VERSION}"
 OUT_ZIP="$(pwd)/kernel_build/${OUT_NAME}.zip"
@@ -40,11 +41,11 @@ OUT_TAR="$(pwd)/kernel_build/${OUT_NAME}.tar"
 OUT_KERNEL="$OUTDIR/arch/arm64/boot/Image"
 OUT_BOOTIMG="$TMPDIR/boot.img"
 OUT_DTBOIMG="$TMPDIR/dtbo.img"
-OUT_VBMETA="$TMPDIR/vbmeta.img"
 OUT_DTBIMAGE="$TMPDIR/dtb.img"
 
 # A13 boot partition, from the stock boot.img dump
 BOOT_PART_SIZE=46137344
+DTBO_PART_SIZE=8388608
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
 BUILD_ARGS=(LOCALVERSION=-langsdorff-${XY_VERSION#@}-${GIT_COMMIT} KBUILD_BUILD_USER=Langsdorff KBUILD_BUILD_HOST=langsdorff)
@@ -135,7 +136,10 @@ if [ "$BOOT_SIZE" -gt "$BOOT_PART_SIZE" ]; then
     exit 1
 fi
 
-python3 "$AVBTOOL" make_vbmeta_image --flags 3 --padding_size 4096 --output "$OUT_VBMETA"
+python3 "$AVBTOOL" add_hash_footer --image "$OUT_BOOTIMG" --partition_name boot \
+    --partition_size $BOOT_PART_SIZE --algorithm SHA256_RSA4096 --key "$AVB_KEY"
+python3 "$AVBTOOL" add_hash_footer --image "$OUT_DTBOIMG" --partition_name dtbo \
+    --partition_size $DTBO_PART_SIZE --algorithm SHA256_RSA4096 --key "$AVB_KEY"
 
 rm -f "$OUT_ZIP" "$OUT_TAR"
 mkdir -p "$TMPDIR/zip/META-INF/com/google/android"
@@ -143,11 +147,10 @@ cp -f "$(pwd)/kernel_build/zip/META-INF/com/google/android/update-binary" "$TMPD
 cp -f "$A13DIR/update-commands" "$TMPDIR/zip/META-INF/com/google/android/update-commands"
 brotli --quality=6 -c "$OUT_BOOTIMG" > "$TMPDIR/zip/boot.br"
 brotli --quality=6 -c "$OUT_DTBOIMG" > "$TMPDIR/zip/dtbo.br"
-brotli --quality=6 -c "$OUT_VBMETA" > "$TMPDIR/zip/vbmeta.br"
-(cd "$TMPDIR/zip" && zip -r9 -q "$OUT_ZIP" META-INF boot.br dtbo.br vbmeta.br)
+(cd "$TMPDIR/zip" && zip -r9 -q "$OUT_ZIP" META-INF boot.br dtbo.br)
 
-(cd "$TMPDIR" && for f in boot.img dtbo.img vbmeta.img; do lz4 -c -12 -B6 --content-size "$f" > "$f.lz4"; done \
-    && tar -cf "$OUT_TAR" boot.img.lz4 dtbo.img.lz4 vbmeta.img.lz4)
+(cd "$TMPDIR" && for f in boot.img dtbo.img; do lz4 -c -12 -B6 --content-size "$f" > "$f.lz4"; done \
+    && tar -cf "$OUT_TAR" boot.img.lz4 dtbo.img.lz4)
 
 (cd "$TMPDIR/vendor_dlkm" && tar -czf "$(pwd)/../../${OUT_NAME}_vendor_dlkm.tar.gz" lib)
 
