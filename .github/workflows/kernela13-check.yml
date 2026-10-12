@@ -79,6 +79,14 @@ jobs:
   build:
     needs: check
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: e
+            name: Enforcing
+          - variant: p
+            name: Permissive
     permissions:
       contents: read
       actions: write
@@ -108,12 +116,14 @@ jobs:
         path: |
           ~/ccache
           ${{ github.workspace }}/out/.thinlto-cache
-        key: ccache-build-${{ github.sha }}
-        restore-keys: ccache-build-
+        key: ccache-build-${{ matrix.variant }}-${{ github.sha }}
+        restore-keys: |
+          ccache-build-${{ matrix.variant }}-
+          ccache-build-
     - name: Build
       run: |
         ccache -z
-        bash kernel_build/builda13.sh "$(pwd)"
+        VARIANT=${{ matrix.variant }} bash kernel_build/builda13.sh "$(pwd)"
     - name: Cache stats
       if: always()
       run: ccache -s
@@ -124,20 +134,21 @@ jobs:
         path: |
           ~/ccache
           ${{ github.workspace }}/out/.thinlto-cache
-        key: ccache-build-${{ github.sha }}
+        key: ccache-build-${{ matrix.variant }}-${{ github.sha }}
     - name: Prune old ccache
       if: always()
       env:
         GH_TOKEN: ${{ github.token }}
-        KEEP: ccache-build-${{ github.sha }}
+        KEEP: ccache-build-${{ matrix.variant }}-${{ github.sha }}
+        PREFIX: ccache-build-${{ matrix.variant }}-
       run: |
         gh cache list -R "$GITHUB_REPOSITORY" -k "$KEEP" --json key -q '.[].key' | grep -qx "$KEEP" || exit 0
-        gh cache list -R "$GITHUB_REPOSITORY" -k ccache-build- -L 100 --json id,key -q ".[] | select(.key != \"$KEEP\") | .id" |
+        gh cache list -R "$GITHUB_REPOSITORY" -k "$PREFIX" -L 100 --json id,key -q ".[] | select(.key != \"$KEEP\") | .id" |
           xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
     - name: Upload
       uses: actions/upload-artifact@v7
       with:
-        name: A13-Kernel
+        name: A13-Kernel-${{ matrix.name }}
         path: kernel_build/langsdorff@a13*
 
   vendor:
@@ -152,11 +163,16 @@ jobs:
       with:
         ref: a13-vendor-stock
         path: stock
-    - name: Download kernel
+    - name: Download enforcing kernel
       uses: actions/download-artifact@v8
       with:
-        name: A13-Kernel
+        name: A13-Kernel-Enforcing
         path: kernel
+    - name: Download permissive kernel
+      uses: actions/download-artifact@v8
+      with:
+        name: A13-Kernel-Permissive
+        path: kernel_p
     - name: Restore erofs-utils
       id: erofs
       uses: actions/cache@v4
@@ -183,7 +199,7 @@ jobs:
     - name: Build vendor
       run: |
         DLKM=$(ls kernel/*_vendor_dlkm.tar.gz)
-        NAME=$(basename "$DLKM" _vendor_dlkm.tar.gz)_vendor
+        NAME=$(basename "$DLKM" e_vendor_dlkm.tar.gz)_vendor
         mkdir -p dist
         sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" "dist/$NAME.img"
         sudo chown "$(id -u):$(id -g)" "dist/$NAME.img"
@@ -191,7 +207,7 @@ jobs:
           --hash_algorithm sha256 --algorithm SHA256_RSA4096 \
           --key kernel_build/mkbootimg/gki/testdata/testkey_rsa4096.pem --do_not_generate_fec
         (cd dist && zip -9 -q "$NAME.zip" "$NAME.img" && rm "$NAME.img")
-        cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar dist/
+        cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar kernel_p/langsdorff@a13*.zip kernel_p/langsdorff@a13*.tar dist/
         (cd dist && sha256sum * > SHA256SUMS && md5sum $(ls | grep -v SUMS) > MD5SUMS && cat SHA256SUMS MD5SUMS)
     - name: Upload to gofile
       working-directory: dist
