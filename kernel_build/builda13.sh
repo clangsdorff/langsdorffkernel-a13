@@ -1,6 +1,7 @@
 #!/bin/bash
 
-XY_VERSION="@a13-0.1"
+VARIANT="${VARIANT:-e}"
+XY_VERSION="@a13-0.1${VARIANT}"
 
 set -e
 
@@ -15,7 +16,11 @@ if [ "$(uname -m)" != "x86_64" ]; then
   exit 1
 fi
 
-DEFCONFIG="${DEFCONFIG:-a13noavb_defconfig}"
+if [ "$VARIANT" = "p" ]; then
+    DEFCONFIG="${DEFCONFIG:-a13noavbp_defconfig}"
+else
+    DEFCONFIG="${DEFCONFIG:-a13noavb_defconfig}"
+fi
 
 OUTDIR="$(pwd)/out"
 MODULES_OUTDIR="$(pwd)/modules_out"
