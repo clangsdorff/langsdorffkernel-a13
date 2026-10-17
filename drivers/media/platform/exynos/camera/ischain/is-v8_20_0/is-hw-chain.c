@@ -67,14 +67,14 @@ void __iomem *hwfc_rst;
 void is_enter_lib_isr(void)
 {
 #ifdef ENABLE_FPSIMD_FOR_USER
-	kernel_neon_begin();
+	is_fpsimd_get_isr();
 #endif
 }
 
 void is_exit_lib_isr(void)
 {
 #ifdef ENABLE_FPSIMD_FOR_USER
-	kernel_neon_end();
+	is_fpsimd_put_isr();
 #endif
 }
 
