@@ -61,6 +61,12 @@ chown -R 0:0 "$TREE/vendor_dlkm"
 find "$TREE/vendor_dlkm" -type d -exec chmod 755 {} + -exec setfattr -n security.selinux -v u:object_r:vendor_file:s0 {} +
 find "$TREE/vendor_dlkm" -type f -exec chmod 644 {} + -exec setfattr -n security.selinux -v u:object_r:vendor_file:s0 {} +
 
+# UN1CA vendor debloat: Defex policy and the stock recovery restoration
+rm -rf "$TREE/etc/dpolicy" \
+       "$TREE/recovery-from-boot.p" \
+       "$TREE/bin/install-recovery.sh" \
+       "$TREE/etc/init/vendor_flash_recovery.rc"
+
 install -m 644 -o 0 -g 0 "$FSTAB" "$TREE/etc/fstab.s5e3830"
 label vendor_configs_file "$TREE/etc/fstab.s5e3830"
 
