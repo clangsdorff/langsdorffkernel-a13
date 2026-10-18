@@ -168,15 +168,18 @@ int __nocfi is_lib_vra_invoke_fwalgs_event(struct is_lib_vra *lib_vra)
 void __nocfi is_lib_vra_task_work(struct kthread_work *work)
 {
 	struct is_task_work *cur_work;
+#ifdef ENABLE_FPSIMD_FOR_USER
+	struct is_fpsimd_task fpsimd;
+#endif
 	struct is_lib_vra *lib_vra;
 
 	cur_work = container_of(work, struct is_task_work, work);
 	lib_vra = (struct is_lib_vra *)cur_work->params;
 
 #ifdef ENABLE_FPSIMD_FOR_USER
-	is_fpsimd_get_task();
+	is_fpsimd_get_task(&fpsimd);
 	cur_work->func((void *)lib_vra);
-	is_fpsimd_put_task();
+	is_fpsimd_put_task(&fpsimd);
 #else
 	cur_work->func((void *)lib_vra);
 #endif

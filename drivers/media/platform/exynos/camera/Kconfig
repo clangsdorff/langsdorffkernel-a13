@@ -1,6 +1,7 @@
 config VIDEO_EXYNOS_PABLO_ISP
 	tristate "Exynos Pablo Camera Driver"
 	depends on VIDEO_EXYNOS
+	select PREEMPT_NOTIFIERS if !DISABLE_CAMERA_SIMD
 	default n
 	help
 	  This is a v4l2 driver for Exynos Pablo IS.

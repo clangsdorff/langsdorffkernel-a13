@@ -18,7 +18,7 @@
 #if defined(ENABLE_FPSIMD_FOR_USER)
 #if defined(LOCAL_FPSIMD_API)
 #define NUM_OF_MAX_CORE		8
-/* task -> func -> isr, plus one spare for a DDK that re-enables IRQs inside a call */
+/* func -> isr, plus spares for a DDK that re-enables IRQs inside a call */
 #define IS_FPSIMD_MAX_DEPTH	4
 
 struct is_fpsimd_stack {
@@ -111,23 +111,53 @@ void is_fpsimd_put_func(void)
 	preempt_enable();
 }
 
-void is_fpsimd_get_task(void)
+/* The DDK sleeps in task context, so its registers follow the thread across switches like 4.19 fpsimd_set_task_using() */
+static void is_fpsimd_task_sched_in(struct preempt_notifier *pn, int cpu)
 {
-	preempt_disable();
+	struct is_fpsimd_task *t = container_of(pn, struct is_fpsimd_task, pn);
+	unsigned long flags;
 
-	is_fpsimd_push(is_fpsimd_flush());
+	local_irq_save(flags);
+	fpsimd_save_and_flush_cpu_state();
+	is_fpsimd_load_state(&t->state);
+	local_irq_restore(flags);
 }
 
-void is_fpsimd_put_task(void)
+static void is_fpsimd_task_sched_out(struct preempt_notifier *pn,
+				     struct task_struct *next)
 {
-	is_fpsimd_pop();
+	struct is_fpsimd_task *t = container_of(pn, struct is_fpsimd_task, pn);
 
+	is_fpsimd_save_state(&t->state);
+}
+
+static struct preempt_ops is_fpsimd_task_ops = {
+	.sched_in	= is_fpsimd_task_sched_in,
+	.sched_out	= is_fpsimd_task_sched_out,
+};
+
+void is_fpsimd_get_task(struct is_fpsimd_task *t)
+{
+	preempt_disable();
+	is_fpsimd_flush();
+	preempt_notifier_init(&t->pn, &is_fpsimd_task_ops);
+	preempt_notifier_register(&t->pn);
+	preempt_enable();
+}
+
+void is_fpsimd_put_task(struct is_fpsimd_task *t)
+{
+	preempt_disable();
+	preempt_notifier_unregister(&t->pn);
 	preempt_enable();
 }
 
 void is_fpsimd_set_task_using(struct task_struct *t)
 {
-	return;
+	static atomic_t notifier_on = ATOMIC_INIT(0);
+
+	if (!atomic_xchg(&notifier_on, 1))
+		preempt_notifier_inc();
 }
 #else
 void is_fpsimd_get_isr(void)
@@ -150,11 +180,11 @@ void is_fpsimd_put_func(void)
 	fpsimd_put();
 }
 
-void is_fpsimd_get_task(void)
+void is_fpsimd_get_task(struct is_fpsimd_task *t)
 {
 }
 
-void is_fpsimd_put_task(void)
+void is_fpsimd_put_task(struct is_fpsimd_task *t)
 {
 }
 
