@@ -25,6 +25,7 @@ struct is_fpsimd_stack {
 	struct is_fpsimd_state	state[IS_FPSIMD_MAX_DEPTH];
 	unsigned long		irq_flags[IS_FPSIMD_MAX_DEPTH];
 	bool			saved[IS_FPSIMD_MAX_DEPTH];
+	bool			bh[IS_FPSIMD_MAX_DEPTH];
 	int			depth;
 };
 
@@ -40,6 +41,27 @@ static bool is_fpsimd_flush(void)
 	fpsimd_save_and_flush_cpu_state();
 	local_bh_enable();
 	return true;
+}
+
+/* A softirq kernel_neon_begin() would see the CPU state as free and clobber the DDK registers */
+static bool is_fpsimd_bh_disable(void)
+{
+	if (in_interrupt())
+		return false;
+
+	local_bh_disable();
+	return true;
+}
+
+static void is_fpsimd_bh_enable(bool bh)
+{
+	if (!bh)
+		return;
+
+	if (irqs_disabled())
+		_local_bh_enable();
+	else
+		local_bh_enable();
 }
 
 static int is_fpsimd_push(bool flushed)
@@ -85,43 +107,61 @@ void is_fpsimd_put_isr(void)
 
 void is_fpsimd_get_func(void)
 {
+	struct is_fpsimd_stack *s;
 	unsigned long flags;
-	bool flushed;
+	bool flushed, bh;
 	int idx;
 
 	preempt_disable();
 	flushed = is_fpsimd_flush();
+	bh = is_fpsimd_bh_disable();
 	local_irq_save(flags);
 
+	s = &fpsimd_stack[smp_processor_id()];
 	idx = is_fpsimd_push(flushed);
-	if (idx >= 0)
-		fpsimd_stack[smp_processor_id()].irq_flags[idx] = flags;
+	if (idx >= 0) {
+		s->irq_flags[idx] = flags;
+		s->bh[idx] = bh;
+	}
 }
 
 void is_fpsimd_put_func(void)
 {
 	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
 	unsigned long flags = s->depth > 0 ? s->irq_flags[s->depth - 1] : 0;
+	bool bh = s->depth > 0 && s->bh[s->depth - 1];
 
 	WARN_ONCE(!irqs_disabled(), "is_fpsimd: DDK returned with IRQs enabled\n");
 
 	is_fpsimd_pop();
 
 	local_irq_restore(flags);
+	is_fpsimd_bh_enable(bh);
 	preempt_enable();
 }
 
 void is_fpsimd_get_task(void)
 {
-	preempt_disable();
+	bool flushed, bh;
+	int idx;
 
-	is_fpsimd_push(is_fpsimd_flush());
+	preempt_disable();
+	flushed = is_fpsimd_flush();
+	bh = is_fpsimd_bh_disable();
+
+	idx = is_fpsimd_push(flushed);
+	if (idx >= 0)
+		fpsimd_stack[smp_processor_id()].bh[idx] = bh;
 }
 
 void is_fpsimd_put_task(void)
 {
+	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
+	bool bh = s->depth > 0 && s->bh[s->depth - 1];
+
 	is_fpsimd_pop();
 
+	is_fpsimd_bh_enable(bh);
 	preempt_enable();
 }
 
