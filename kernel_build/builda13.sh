@@ -53,7 +53,7 @@ BOOT_PART_SIZE=46137344
 DTBO_PART_SIZE=8388608
 
 GIT_COMMIT=$(git rev-parse --short HEAD)
-BUILD_ARGS=(LOCALVERSION=-langsdorff${XY_VERSION}-${GIT_COMMIT} KBUILD_BUILD_USER=Langsdorff KBUILD_BUILD_HOST=langsdorff)
+BUILD_ARGS=(LOCALVERSION=-langsdorff-${XY_VERSION#@}-${GIT_COMMIT} KBUILD_BUILD_USER=Langsdorff KBUILD_BUILD_HOST=langsdorff)
 command -v ccache >/dev/null && BUILD_ARGS+=("CC=ccache clang")
 
 DIR="$(readlink -f .)"
