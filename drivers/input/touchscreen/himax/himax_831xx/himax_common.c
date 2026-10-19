@@ -3569,17 +3569,22 @@ int himax_ctrl_tsp_reset_regulator(struct himax_ts_data *ts, bool on)
 	input_info(true, ts->dev, "%s: called! %s, regulator_is_enabled(%d)\n",
 				__func__, on ? "on" : "off", regulator_is_enabled(ts->regulator_tsp_rst));
 
-	if (regulator_is_enabled(ts->regulator_tsp_rst) == on)
+	if (ts->tsp_rst_enabled == on && regulator_is_enabled(ts->regulator_tsp_rst) == on)
 		return ret;
 
-	if (on) {
+	/* 5.10 counts enables per consumer; take our own reference on the boot-on regulator before dropping it */
+	if (!ts->tsp_rst_enabled) {
 		ret = regulator_enable(ts->regulator_tsp_rst);
 		if (ret) {
 			input_err(true, ts->dev, "%s: Failed to enable regulator_tsp_rst: %d\n", __func__, ret);
 			goto out;
 		}
-	} else {
+		ts->tsp_rst_enabled = true;
+	}
+
+	if (!on) {
 		regulator_disable(ts->regulator_tsp_rst);
+		ts->tsp_rst_enabled = false;
 	}
 
 out:
