@@ -510,6 +510,7 @@ struct himax_ts_data {
 	struct work_struct fb_resume_work;
 #endif
 	bool sysinput_seen;
+	bool tsp_rst_enabled;
 
 #if IS_ENABLED(CONFIG_INPUT_SEC_NOTIFIER)
 	struct notifier_block himax_input_nb;
