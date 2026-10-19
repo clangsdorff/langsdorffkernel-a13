@@ -89,6 +89,8 @@ mkdir -p "$RAMDISK_DIR/lib/modules/0.0"
 for m in $(cat "$TMPDIR/first.load"); do
     cp -f "$(find "$KMODS" -name "$m")" "$RAMDISK_DIR/lib/modules/0.0/$m"
 done
+cp -f "$TMPDIR/first.load" "$RAMDISK_DIR/lib/modules/0.0/modules.order"
+cp -f "$OUTDIR/modules.builtin" "$RAMDISK_DIR/lib/modules/0.0/modules.builtin"
 depmod 0.0 -b "$RAMDISK_DIR"
 sed -i 's/\([^ ]\+\)/\/lib\/modules\/\1/g' "$RAMDISK_DIR/lib/modules/0.0/modules.dep"
 mv "$RAMDISK_DIR/lib/modules/0.0"/* "$RAMDISK_DIR/lib/modules/"
@@ -100,6 +102,8 @@ mkdir -p "$TMPDIR/vdlkm_stage/lib/modules/0.0"
 for m in $(cat "$TMPDIR/second.load"); do
     cp -f "$(find "$KMODS" -name "$m")" "$TMPDIR/vdlkm_stage/lib/modules/0.0/$m"
 done
+cp -f "$TMPDIR/second.load" "$TMPDIR/vdlkm_stage/lib/modules/0.0/modules.order"
+cp -f "$OUTDIR/modules.builtin" "$TMPDIR/vdlkm_stage/lib/modules/0.0/modules.builtin"
 depmod 0.0 -b "$TMPDIR/vdlkm_stage"
 mv "$TMPDIR/vdlkm_stage/lib/modules/0.0"/* "$VDLKM_DIR/"
 find "$VDLKM_DIR" -name "modules.*" ! -name modules.dep ! -name modules.softdep ! -name modules.alias -delete
