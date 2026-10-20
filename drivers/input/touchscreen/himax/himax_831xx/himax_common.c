@@ -3566,7 +3566,7 @@ int himax_ctrl_tsp_reset_regulator(struct himax_ts_data *ts, bool on)
 		return 0;
 	}
 
-	input_err(true, ts->dev, "%s: called! %s, regulator_is_enabled(%d)\n",
+	input_info(true, ts->dev, "%s: called! %s, regulator_is_enabled(%d)\n",
 				__func__, on ? "on" : "off", regulator_is_enabled(ts->regulator_tsp_rst));
 
 	if (ts->tsp_rst_enabled == on && regulator_is_enabled(ts->regulator_tsp_rst) == on)
@@ -3588,7 +3588,7 @@ int himax_ctrl_tsp_reset_regulator(struct himax_ts_data *ts, bool on)
 	}
 
 out:
-	input_err(true, ts->dev, "%s: %s: done. regulator_is_enabled(%d)\n",
+	input_info(true, ts->dev, "%s: %s: done. regulator_is_enabled(%d)\n",
 			__func__, on ? "on" : "off", regulator_is_enabled(ts->regulator_tsp_rst));
 
 	return ret;

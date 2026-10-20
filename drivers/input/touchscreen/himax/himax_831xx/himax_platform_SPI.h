@@ -36,7 +36,7 @@
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
 #define D(x...) pr_debug("[HXTP] " x)
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_HIMAX_SPI)
-#define I(x...) input_err(true, &private_ts->spi->dev, "[HXTP] " x)
+#define I(x...) input_info(true, &private_ts->spi->dev, "[HXTP] " x)
 #define E(x...) input_err(true, &private_ts->spi->dev, "[HXTP] " x)
 #define RI(x...) input_raw_info(true, &private_ts->spi->dev, "[HXTP] " x)
 #else
