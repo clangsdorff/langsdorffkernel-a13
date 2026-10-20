@@ -53,6 +53,8 @@ done
     install -m 644 -o 0 -g 0 "$OVERLAY/firmware/$f" "$TREE/firmware/$f"
     label vendor_fw_file "$TREE/firmware/$f"
 done
+# 5.10 chub loads os.checked.bin itself; 4.19 shub pushed the board image into the same SRAM base
+cat "$OVERLAY/firmware/sensorhub/shub_nacho_a13.bin" > "$TREE/firmware/os.checked.bin"
 
 rm -f "$TREE"/lib/modules/*.ko
 mkdir -p "$TREE/vendor_dlkm"
@@ -133,6 +135,52 @@ for key in SEC_FLOATING_FEATURE_SENSOR_CONFIG_SABC_CAMERA_TYPE SEC_FLOATING_FEAT
     grep -q "<$key>" "$ff" || sed -i "s#^\(\s*\)</SecFloatingFeatureSet>#$line\n\1</SecFloatingFeatureSet>#" "$ff"
     grep -q "<$key>" "$ff"
 done
+
+# Lines that only log errors on A13: no persist or spu partition, /data is not mounted
+# at "on init", the vendor is read-only and some binaries are missing (32-bit, goodix, dhcpcd, wpal).
+# Every edit checks that the line is there, and writes back with cat to keep the SELinux label.
+save() {
+    cat "$TREE/tmp" > "$TREE/$1"
+    rm "$TREE/tmp"
+}
+drop_line() {
+    grep -qE "$2" "$TREE/$1"
+    grep -vE "$2" "$TREE/$1" > "$TREE/tmp"
+    save "$1"
+}
+# a block is a paragraph between blank lines, e.g. a whole service definition
+drop_block() {
+    grep -qF "$2" "$TREE/$1"
+    awk -v RS= -v ORS='\n\n' -v text="$2" 'index($0, text) == 0' "$TREE/$1" > "$TREE/tmp"
+    save "$1"
+}
+
+rc=etc/init/init.s5e3830.rc
+drop_line $rc '^ *# Set permissions for persist partition$'
+drop_line $rc '^ *mkdir /persist '
+drop_line $rc '^ *symlink /data/app /factory$'
+drop_line $rc '^# Directory for GPS$'
+drop_line $rc '^ *rm /data/system/gps/'
+drop_line $rc '^ *setprop ro.radio.noril no$'
+for s in goodixd dhcpcd_wlan0 iprenew_wlan0 dhcpcd_p2p iprenew_p2p dhcpcd_bt-pan iprenew_bt-pan; do
+    drop_block $rc "service $s "
+done
+
+drop_line etc/init/init.sensorhub.rc ' /spu/sensorhub'
+drop_line etc/init/wifi.rc ' /vendor/etc/wifi/indoorchannel\.info$'
+drop_line etc/init/wifi_slsi_850.rc '^ *start wpal$'
+drop_block etc/init/wifi_slsi_850.rc 'service wpal '
+drop_block etc/init/snap_utility.rc 'service snap_utility_32 '
+drop_block etc/init/snap_utility.rc 'start snap_utility_32'
+
+# /sys entry without an attribute name
+drop_line etc/ueventd.rc '^/sys/bus/iio/devices/iio:device\* +0664 +system +radio$'
+
+# vendor_init may not set these; the stock file also repeats some lines with the same value
+drop_line build.prop '^net\.dns[12]='
+drop_line build.prop '^persist\.demo\.hdmirotationlock='
+awk '!/=/ || !seen[$0]++' "$TREE/build.prop" > "$TREE/tmp"
+save build.prop
 
 rm -f "$OUT_IMG"
 # stock A14 UUID so the same inputs give the same image hash

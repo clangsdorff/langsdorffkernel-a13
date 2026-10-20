@@ -23,23 +23,23 @@ odm     /odm     f2fs   ro      wait,logical,first_stage_mount
 /dev/block/by-name/dtbo	/dtbo	emmc	defaults	first_stage_mount,formattable
 /dev/block/by-name/vbmeta	/vbmeta	emmc	defaults	first_stage_mount,formattable
 /dev/block/by-name/metadata	/metadata	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic,sync	wait,formattable,first_stage_mount,check
-/dev/block/by-name/userdata	/data	f2fs	noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678,inlinecrypt	latemount,wait,check,quota,reservedsize=128M,checkpoint=fs,,fscompress,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
+/dev/block/by-name/userdata	/data	f2fs	noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678,inlinecrypt	latemount,wait,check,quota,reservedsize=128M,checkpoint=fs,fscompress,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption
 /dev/block/by-name/efs	/mnt/vendor/efs	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	wait,check
 /dev/block/by-name/cpefs	/mnt/vendor/cpefs	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic	wait,check,nofail
 #/dev/block/by-name/persist            /mnt/vendor/persist    ext4    noatime,nosuid,nodev,barrier=1,data=ordered,nodelalloc,nomblk_io_submit,errors=panic    wait,notrim,formattable
 /dev/block/by-name/misc	/misc	emmc	defaults	defaults,first_stage_mount
 /dev/block/by-name/recovery	/recovery	emmc	defaults	first_stage_mount
 /dev/block/by-name/cache        /cache  ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic wait,check
-/dev/block/by-name/cache        /cache  f2fs    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic wait,check
+/dev/block/by-name/cache        /cache  f2fs    noatime,nosuid,nodev,discard wait,check
 /dev/block/by-name/keystorage	/keystorage	emmc	defaults	first_stage_mount
 
 # CSC
 /dev/block/by-name/prism        /prism  ext4    ro,barrier=1    nofail,first_stage_mount
 /dev/block/by-name/optics       /optics ext4    ro,barrier=1    nofail,first_stage_mount
-/dev/block/by-name/prism        /prism  erofs   ro,barrier=1    nofail,first_stage_mount
-/dev/block/by-name/optics       /optics erofs   ro,barrier=1    nofail,first_stage_mount
-/dev/block/by-name/prism        /prism  f2fs    ro,barrier=1    nofail,first_stage_mount
-/dev/block/by-name/optics       /optics f2fs    ro,barrier=1    nofail,first_stage_mount
+/dev/block/by-name/prism        /prism  erofs   ro    nofail,first_stage_mount
+/dev/block/by-name/optics       /optics erofs   ro    nofail,first_stage_mount
+/dev/block/by-name/prism        /prism  f2fs    ro    nofail,first_stage_mount
+/dev/block/by-name/optics       /optics f2fs    ro    nofail,first_stage_mount
 
 # VOLD
 /devices/platform/13600000.usb*	auto	vfat	default	voldmanaged=usb:auto
