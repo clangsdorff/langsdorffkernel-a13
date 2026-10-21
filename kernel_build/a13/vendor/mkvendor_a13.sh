@@ -119,6 +119,8 @@ python3 "$KIT/camhal_patch.py" "$TREE/lib64/libexynoscamera3.so" "$WORK/libexyno
 cat "$WORK/libexynoscamera3.so" > "$TREE/lib64/libexynoscamera3.so"
 python3 "$KIT/sec2lsi_patch.py" "$TREE/lib64/libsec2lsi_conversion.so" "$A13V/lib/libsec2lsi_conversion.so" "$WORK/libsec2lsi_conversion.so"
 cat "$WORK/libsec2lsi_conversion.so" > "$TREE/lib64/libsec2lsi_conversion.so"
+python3 "$KIT/proxhal_patch.py" "$TREE/lib64/sensors.inputvirtual.so" "$WORK/sensors.inputvirtual.so"
+cat "$WORK/sensors.inputvirtual.so" > "$TREE/lib64/sensors.inputvirtual.so"
 install -m 644 -o 0 -g 0 "$A13V/etc/SetMultiCalInfo.bin" "$TREE/firmware/SetMultiCalInfo.bin"
 label vendor_fw_file "$TREE/firmware/SetMultiCalInfo.bin"
 
