@@ -53,8 +53,6 @@ done
     install -m 644 -o 0 -g 0 "$OVERLAY/firmware/$f" "$TREE/firmware/$f"
     label vendor_fw_file "$TREE/firmware/$f"
 done
-# 5.10 chub loads os.checked.bin itself; 4.19 shub pushed the board image into the same SRAM base
-cat "$OVERLAY/firmware/sensorhub/shub_nacho_a13.bin" > "$TREE/firmware/os.checked.bin"
 
 rm -f "$TREE"/lib/modules/*.ko
 mkdir -p "$TREE/vendor_dlkm"
