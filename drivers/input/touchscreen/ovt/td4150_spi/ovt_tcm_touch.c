@@ -156,6 +156,16 @@ struct touch_hcd {
 
 static struct touch_hcd *touch_hcd;
 
+/* input core drops a repeated value, let the first status after enable reach the HAL */
+void touch_reset_proximity(void)
+{
+	if (!touch_hcd || !touch_hcd->input_dev_proximity)
+		return;
+
+	touch_hcd->touch_data.fd_data = UINT_MAX;
+	touch_hcd->input_dev_proximity->absinfo[ABS_MT_CUSTOM].value = -1;
+}
+
 /**
  * touch_free_objects() - Free all touch objects
  *

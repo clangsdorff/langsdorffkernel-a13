@@ -854,6 +854,9 @@ static void ear_detect_enable(void *device_data)
 		goto out;
 	}
 
+	if (tcm_hcd->ear_detect_enable)
+		touch_reset_proximity();
+
 	mutex_lock(&tcm_hcd->mode_change_mutex);
 	ret = tcm_hcd->set_dynamic_config(tcm_hcd, DC_ENABLE_FACE_DETECT, tcm_hcd->ear_detect_enable);
 	if (ret < 0) {

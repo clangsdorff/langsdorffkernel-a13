@@ -2401,6 +2401,9 @@ static void ear_detect_enable(void *device_data)
 		goto fail;
 	}
 	ts_data->hover_event = 0xFF;
+	/* input core drops a repeated value, let the first status after enable reach the HAL */
+	if (ts_data->proximity_mode && ts_data->input_dev_proximity)
+		ts_data->input_dev_proximity->absinfo[ABS_MT_CUSTOM].value = -1;
 
 	FTS_INFO("%d", sec->cmd_param[0]);
 
