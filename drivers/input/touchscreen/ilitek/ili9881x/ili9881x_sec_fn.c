@@ -1520,6 +1520,10 @@ static void ear_detect_enable(void *device_data)
 		goto out;
 	}
 
+	/* input core drops a repeated value, let the first status after enable reach the HAL */
+	if (ilits->prox_face_mode && ilits->input_dev_proximity)
+		ilits->input_dev_proximity->absinfo[ABS_MT_CUSTOM].value = -1;
+
 	ret = ili_ic_func_ctrl("proximity", ilits->prox_face_mode);
 	if (ret < 0)
 		input_err(true, ilits->dev, "%s Ear Detect Mode Setting failed\n", __func__);

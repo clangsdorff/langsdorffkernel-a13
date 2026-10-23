@@ -724,6 +724,7 @@ int zeroflash_remove(struct ovt_tcm_hcd *tcm_hcd);
 int ovt_tcm_power_ctrl(struct ovt_tcm_hcd *tcm_hcd, bool on);
 int ovt_tcm_reset_ctrl(struct ovt_tcm_hcd *tcm_hcd, bool on);
 void touch_free_objects(void);
+void touch_reset_proximity(void);
 
 int ovt_tcm_suspend(struct device *dev);
 int ovt_tcm_early_suspend(struct device *dev);

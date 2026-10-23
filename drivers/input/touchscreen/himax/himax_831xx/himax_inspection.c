@@ -5062,6 +5062,9 @@ void psensor_enable(struct himax_ts_data *data, unsigned int mode)
 	uint8_t tmp_data[4] = {0};
 
 	input_info(true, data->dev, "%s,%d\n", __func__, mode);
+	/* input core drops a repeated value, let the first status after enable reach the HAL */
+	if (mode && data->input_dev_proximity)
+		data->input_dev_proximity->absinfo[ABS_MT_CUSTOM].value = -1;
 	switch (mode) {
 	case 0:
 		data->ear_detect_mode = 0;
