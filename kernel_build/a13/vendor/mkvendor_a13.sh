@@ -121,6 +121,10 @@ python3 "$KIT/sec2lsi_patch.py" "$TREE/lib64/libsec2lsi_conversion.so" "$A13V/li
 cat "$WORK/libsec2lsi_conversion.so" > "$TREE/lib64/libsec2lsi_conversion.so"
 python3 "$KIT/proxhal_patch.py" "$TREE/lib64/sensors.inputvirtual.so" "$WORK/sensors.inputvirtual.so"
 cat "$WORK/sensors.inputvirtual.so" > "$TREE/lib64/sensors.inputvirtual.so"
+# The A14 multihal list has no inputvirtual subhal, A13 loads it like the A13 stock hals.conf
+hc=$TREE/etc/sensors/hals.conf
+grep -q inputvirtual "$hc" || printf '\n/vendor/lib64/sensors.inputvirtual.so\n' >> "$hc"
+sed -i '/^$/d' "$hc"
 install -m 644 -o 0 -g 0 "$A13V/etc/SetMultiCalInfo.bin" "$TREE/firmware/SetMultiCalInfo.bin"
 label vendor_fw_file "$TREE/firmware/SetMultiCalInfo.bin"
 
