@@ -124,7 +124,9 @@ cat "$WORK/sensors.inputvirtual.so" > "$TREE/lib64/sensors.inputvirtual.so"
 # The A14 multihal list has no inputvirtual subhal, A13 loads it like the A13 stock hals.conf
 hc=$TREE/etc/sensors/hals.conf
 grep -q inputvirtual "$hc" || printf '\n/vendor/lib64/sensors.inputvirtual.so\n' >> "$hc"
-sed -i '/^$/d' "$hc"
+grep -v '^$' "$hc" > "$TREE/tmp"
+cat "$TREE/tmp" > "$hc"
+rm "$TREE/tmp"
 install -m 644 -o 0 -g 0 "$A13V/etc/SetMultiCalInfo.bin" "$TREE/firmware/SetMultiCalInfo.bin"
 label vendor_fw_file "$TREE/firmware/SetMultiCalInfo.bin"
 
