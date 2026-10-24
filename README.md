@@ -34,8 +34,7 @@
 - On One UI ROMs, disabling RAM Plus is recommended for better performance.
 
 **Known Issues**
-- USB OTG is not confirmed to work.
-- Camera fixes are waiting for test results. Ultra-wide and macro calibration is not read yet.
+- Nothing.
 
 # Installation
 **Installation — Odin3**
