@@ -42,15 +42,6 @@
 #include "objsec.h"
 #include "conditional.h"
 
-#ifdef CONFIG_KSU_SUSFS
-extern struct selinux_state fake_state;
-extern struct page *fake_status;
-extern struct static_key_false fake_status_initialize_key;
-extern bool ksu_selinux_hide_running __read_mostly;
-extern bool ksu_selinux_hide_enabled __read_mostly;
-extern void initialize_fake_status(void);
-#endif // #ifdef CONFIG_KSU_SUSFS
-
 enum sel_inos {
 	SEL_ROOT_INO = 2,
 	SEL_LOAD,	/* load policy */
@@ -239,31 +230,12 @@ static int sel_open_handle_status(struct inode *inode, struct file *filp)
 {
 	struct selinux_fs_info *fsi = file_inode(filp)->i_sb->s_fs_info;
 	struct page    *status = selinux_kernel_status_page(fsi->state);
-#ifdef CONFIG_KSU_SUSFS
-	void *data;
-
-	if (likely(current_uid().val >= 10000 && ksu_selinux_hide_running)) {
-		mutex_lock(&selinux_state.status_lock);
-		data = fake_status;
-		mutex_unlock(&selinux_state.status_lock);
-		if (data) {
-			filp->private_data = data;
-			return 0;
-		}
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 	if (!status)
 		return -ENOMEM;
 
 	filp->private_data = status;
 
-#ifdef CONFIG_KSU_SUSFS
-	if (static_branch_unlikely(&fake_status_initialize_key)) {
-		if (!fake_status)
-			initialize_fake_status();
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
 	return 0;
 }
 
@@ -716,9 +688,6 @@ static ssize_t sel_write_context(struct file *file, char *buf, size_t size)
 	char *canon = NULL;
 	u32 sid, len;
 	ssize_t length;
-#ifdef CONFIG_KSU_SUSFS
-	bool should_check_current = (likely(current_uid().val >= 10000 && ksu_selinux_hide_running));
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 	length = avc_has_perm(&selinux_state,
 			      current_sid(), SECINITSID_SECURITY,
@@ -726,36 +695,14 @@ static ssize_t sel_write_context(struct file *file, char *buf, size_t size)
 	if (length)
 		goto out;
 
-#ifdef CONFIG_KSU_SUSFS
-	if (should_check_current) {
-		length = security_context_to_sid(&fake_state, buf, size, &sid, GFP_KERNEL);
-		if (length)
-			goto out;
-		goto bypass_orig_flow1;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
-
 	length = security_context_to_sid(state, buf, size, &sid, GFP_KERNEL);
 	if (length)
 		goto out;
-
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow1:
-	if (should_check_current) {
-		length = security_sid_to_context(&fake_state, sid, &canon, &len);
-		if (length)
-			goto out;
-		goto bypass_orig_flow2;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 	length = security_sid_to_context(state, sid, &canon, &len);
 	if (length)
 		goto out;
 
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow2:
-#endif // #ifdef CONFIG_KSU_SUSFS
 	length = -ERANGE;
 	if (len > SIMPLE_TRANSACTION_LIMIT) {
 		pr_err("SELinux: %s:  context size (%u) exceeds "
@@ -972,9 +919,6 @@ static ssize_t sel_write_access(struct file *file, char *buf, size_t size)
 	u16 tclass;
 	struct av_decision avd;
 	ssize_t length;
-#ifdef CONFIG_KSU_SUSFS
-	bool should_check_current = (likely(current_uid().val >= 10000 && ksu_selinux_hide_running));
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 	length = avc_has_perm(&selinux_state,
 			      current_sid(), SECINITSID_SECURITY,
@@ -996,45 +940,16 @@ static ssize_t sel_write_access(struct file *file, char *buf, size_t size)
 	if (sscanf(buf, "%s %s %hu", scon, tcon, &tclass) != 3)
 		goto out;
 
-#ifdef CONFIG_KSU_SUSFS
-	if (should_check_current) {
-		length = security_context_str_to_sid(&fake_state, scon, &ssid, GFP_KERNEL);
-		if (length)
-			goto out;
-		goto bypass_orig_flow1;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
 	length = security_context_str_to_sid(state, scon, &ssid, GFP_KERNEL);
 	if (length)
 		goto out;
-
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow1:
-	if (should_check_current) {
-		length = security_context_str_to_sid(&fake_state, tcon, &tsid, GFP_KERNEL);
-		if (length)
-			goto out;
-		goto bypass_orig_flow2;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 	length = security_context_str_to_sid(state, tcon, &tsid, GFP_KERNEL);
 	if (length)
 		goto out;
 
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow2:
-	if (should_check_current) {
-		security_compute_av_user(&fake_state, ssid, tsid, tclass, &avd);
-		goto bypass_orig_flow3;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS
-
 	security_compute_av_user(state, ssid, tsid, tclass, &avd);
 
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow3:
-#endif // #ifdef CONFIG_KSU_SUSFS
 	length = scnprintf(buf, SIMPLE_TRANSACTION_LIMIT,
 			  "%x %x %x %x %u %x",
 			  avd.allowed, 0xffffffff,
