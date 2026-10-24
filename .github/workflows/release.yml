@@ -139,11 +139,14 @@ jobs:
           --hash_algorithm sha256 --algorithm SHA256_RSA4096 \
           --key kernel_build/mkbootimg/gki/testdata/testkey_rsa4096.pem --do_not_generate_fec
         (cd dist && zip -9 -q "$NAME.zip" "$NAME.img" && rm "$NAME.img")
+        cp kernel_build/a13/odm_a14.img "dist/langsdorff@a13-${{ github.ref_name }}_odm.img"
     - name: Upload
       uses: actions/upload-artifact@v7
       with:
         name: Vendor-Build
-        path: dist/*_vendor.zip
+        path: |
+          dist/*_vendor.zip
+          dist/*_odm.img
   ReleaseKernel:
     runs-on: ubuntu-22.04
     needs: [Enforcing, Permissive, EnforcingNoOC, PermissiveNoOC, Vendor]
