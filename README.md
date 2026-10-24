@@ -8,30 +8,48 @@
 - Every GPU clock step reachable and holdable. 1105 MHz opens at 65% utilization, 1196 MHz at 70%.
 - Floor under the GPU clock ceiling, default 1001 MHz.
 - Runtime tunables for the GPU ceiling floor and the governor redirect.
-- Official KernelSU v3.3.0 with SUSFS v2.3.0.
-- Dex touchpad support for OneUI ROMs.
+- Samsung input booster, short CPU and memory speed-up on taps, scrolling and key presses.
+- Backported upstream menu idle governor, better sleep state choices and faster wake-up.
+- Backported lazy RCU from Linux 6.2 with callback offloading on all CPUs, fewer wake-ups while idle.
+- Backported batched TLB flushing from Linux 6.5, less stutter while switching apps and swapping.
+- Backported PSI optimizations from Linux 6.1, faster memory pressure tracking for lmkd.
+- Backported f2fs block age extent cache from Linux 6.2, less garbage collection on the eMMC.
+- zram recompression with zstd 1.5.7 and 8-page zsmalloc chains, more apps stay in memory.
+- Multi-gen LRU page cache fix, frequently read app files stay cached.
+- Official KernelSU v3.3.1 with SUSFS v2.3.0.
 - Removed firmware checks from check_connection in novatek touchscreen driver to fix 2 seconds delay for RestlessOS treble patchset based GSI's
 - Built-in hook for the `${fps_position}` bug in flagship FOD ports.
 - A13 fingerprint (Egis ET528), NFC (NXP PN557) and cameras (S5KJN1, GC08A3, GC5035, GC02M1) on the A14 vendor.
 - /data encrypted with the stock A14 FBE flags.
 - AVB and some security checks disabled.
-- Based on Linux 5.10.236.
+- Merged with android13-5.10-lts, based on Linux 5.10.272.
+
+**No Overclock & Root Version Features**
+- Everything in main version, **except**;
+- CPU & GPU overclock.
+- Floor under the GPU clock ceiling.
+- KernelSU & SUSFS
+
+**Recommendation**
+- On One UI ROMs, disabling RAM Plus is recommended for better performance.
 
 **Known Issues**
-- USB OTG is not confirmed to work.
-- Camera fixes are waiting for test results. Ultra-wide and macro calibration is not read yet.
-- Dex touchpad does not work on the OVT TD4150 touchscreen.
+- Nothing.
 
 # Installation
 **Installation — Odin3**
-1. Download the latest ".tar" from the build.
+> A disabled vbmeta is required. The `.tar` contains only the kernel. It does not boot without the A14 vendor, flash "_vendor.zip" from TWRP first (see below).
+
+1. Download the latest ".tar" from the release.
 2. Power off the device.
 3. Boot into Download Mode (connect to PC while holding Volume UP + Volume DOWN).
 4. Open Odin3 and place the `.tar` into the `AP` slot.
 5. Flash and wait for the device to reboot.
 
 **Installation — TWRP**
-1. Download the latest kernel ".zip" and "_vendor.zip" from the build.
+> A disabled vbmeta is required.
+
+1. Download the latest kernel ".zip" and "_vendor.zip" from the release.
 2. Boot into Recovery Mode (TWRP).
 3. Select `Install` → choose the kernel `.zip` file.
 4. Extract "_vendor.zip", select `Install Image` → choose the `.img` and flash it to `Vendor`.
@@ -44,12 +62,12 @@
 **Credits**
 - Base kernel: [Gabriel2392](https://github.com/Gabriel2392)
 - CPU & GPU Overclock, `${fps_position}` hook, updated sdfat driver: [Gabriel2392](https://github.com/Gabriel2392)
-- Dex touchpad support: [rsuntk](https://github.com/rsuntk)
 - KernelSU: [tiann](https://github.com/tiann/)
 
 # Download
-- Every push to `a13-port` builds the kernel and the vendor image.
-- The gofile link and the SHA256 checksums are in the GitHub Actions run summary.
+- [GitHub Releases](https://github.com/clangsdorff/langsdorffkernel-a13/releases/latest)
+- `e` / `p`: Enforcing / Permissive SELinux. `n` builds have no overclock and no root.
+- `_vendor.zip` is needed on first install, kernel updates do not need a vendor flash.
 
 **Device & Notes**
 - Device: A135F (Exynos 850)
