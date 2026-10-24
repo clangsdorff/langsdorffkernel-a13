@@ -33,7 +33,6 @@ IN_DTBO_R06="$OUTDIR/arch/arm64/boot/dts/samsung/a13/a13_eur_open_w00_r06.dtbo"
 A14_LOAD="$(pwd)/kernel_build/vboot_dlkm/modules.load"
 
 RAMDISK_DIR="$TMPDIR/ramdisk"
-VDLKM_DIR="$TMPDIR/vendor_dlkm/lib/modules"
 
 MKBOOTIMG="$(pwd)/kernel_build/mkbootimg/mkbootimg.py"
 MKDTBOIMG="$(pwd)/kernel_build/dtb/mkdtboimg.py"
@@ -78,17 +77,19 @@ make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}"
 make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}"
 make -j$(nproc --all) -C $(pwd) LDFLAGS="-fuse-ld=mold" O=out "${BUILD_ARGS[@]}" INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" INSTALL_MOD_PATH="$MODULES_OUTDIR" modules_install
 
-mkdir -p "$TMPDIR" "$RAMDISK_DIR" "$VDLKM_DIR"
+mkdir -p "$TMPDIR" "$RAMDISK_DIR"
 
-# Module split: everything first-stage needs goes in the ramdisk, device drivers go to /vendor/vendor_dlkm
+# Every module is loaded by first stage init from the ramdisk, so a kernel update needs no vendor flash
 KVER=$(ls "$MODULES_OUTDIR/lib/modules")
 KMODS="$MODULES_OUTDIR/lib/modules/$KVER"
-python3 "$A13DIR/split_modules.py" "$KMODS" "$A14_LOAD" "$A13DIR/modules_extra.load" "$A13DIR/second_stage.regex" "$TMPDIR/first.load" "$TMPDIR/second.load"
+python3 "$A13DIR/split_modules.py" "$KMODS" "$A14_LOAD" "$A13DIR/modules_extra.load" "$TMPDIR/first.load"
 
 mkdir -p "$RAMDISK_DIR/lib/modules/0.0"
 for m in $(cat "$TMPDIR/first.load"); do
     cp -f "$(find "$KMODS" -name "$m")" "$RAMDISK_DIR/lib/modules/0.0/$m"
 done
+cp -f "$TMPDIR/first.load" "$RAMDISK_DIR/lib/modules/0.0/modules.order"
+cp -f "$OUTDIR/modules.builtin" "$RAMDISK_DIR/lib/modules/0.0/modules.builtin"
 depmod 0.0 -b "$RAMDISK_DIR"
 sed -i 's/\([^ ]\+\)/\/lib\/modules\/\1/g' "$RAMDISK_DIR/lib/modules/0.0/modules.dep"
 mv "$RAMDISK_DIR/lib/modules/0.0"/* "$RAMDISK_DIR/lib/modules/"
@@ -96,16 +97,9 @@ rmdir "$RAMDISK_DIR/lib/modules/0.0"
 find "$RAMDISK_DIR/lib/modules" -name "modules.*" ! -name modules.dep ! -name modules.softdep ! -name modules.alias -delete
 cp -f "$TMPDIR/first.load" "$RAMDISK_DIR/lib/modules/modules.load"
 
-mkdir -p "$TMPDIR/vdlkm_stage/lib/modules/0.0"
-for m in $(cat "$TMPDIR/second.load"); do
-    cp -f "$(find "$KMODS" -name "$m")" "$TMPDIR/vdlkm_stage/lib/modules/0.0/$m"
-done
-depmod 0.0 -b "$TMPDIR/vdlkm_stage"
-mv "$TMPDIR/vdlkm_stage/lib/modules/0.0"/* "$VDLKM_DIR/"
-find "$VDLKM_DIR" -name "modules.*" ! -name modules.dep ! -name modules.softdep ! -name modules.alias -delete
-cp -f "$TMPDIR/second.load" "$VDLKM_DIR/modules.load"
-
 cp -a "$A13DIR/ramdisk/." "$RAMDISK_DIR/"
+# Touch, grip and sensorhub drivers request their firmware at probe, before /vendor is mounted
+cp -a "$A13DIR/vendor/vendor_overlay/firmware" "$RAMDISK_DIR/lib/firmware"
 for d in debug_ramdisk dev metadata mnt proc second_stage_resources sys first_stage_ramdisk; do
     mkdir -p "$RAMDISK_DIR/$d"
 done
@@ -116,6 +110,7 @@ cp -f "$A13DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
 chmod 640 "$RAMDISK_DIR/fstab.s5e3830" "$RAMDISK_DIR/first_stage_ramdisk/fstab.s5e3830"
 
 (cd "$RAMDISK_DIR" && find . | sort | cpio --quiet -o -H newc -R root:root | zstd -19 -q -c > "$TMPDIR/ramdisk.zst")
+echo "ramdisk: $(stat -c %s "$TMPDIR/ramdisk.zst"), kernel: $(stat -c %s "$OUT_KERNEL")"
 
 python2 "$MKDTBOIMG" create "$OUT_DTBIMAGE" --page_size=2048 --version=0 "$IN_DTB" --id=0 --rev=0 --custom0=0x0 --custom1=0xff
 python2 "$MKDTBOIMG" create "$OUT_DTBOIMG" --page_size=2048 --version=0 \
@@ -157,7 +152,5 @@ brotli --quality=6 -c "$OUT_DTBOIMG" > "$TMPDIR/zip/dtbo.br"
 (cd "$TMPDIR" && for f in boot.img dtbo.img; do lz4 -c -12 -B6 --content-size "$f" > "$f.lz4"; done \
     && tar -cf "$OUT_TAR" boot.img.lz4 dtbo.img.lz4)
 
-(cd "$TMPDIR/vendor_dlkm" && tar -czf "$(pwd)/../../${OUT_NAME}_vendor_dlkm.tar.gz" lib)
-
-echo "Done: $OUT_ZIP $OUT_TAR kernel_build/${OUT_NAME}_vendor_dlkm.tar.gz"
+echo "Done: $OUT_ZIP $OUT_TAR"
 rm -rf "$MODULES_OUTDIR"

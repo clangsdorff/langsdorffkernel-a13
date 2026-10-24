@@ -1,6 +1,6 @@
-import os, re, sys
+import os, sys
 
-kmods, ref_load, extra_load, regex_file, out_first, out_second = sys.argv[1:7]
+kmods, ref_load, extra_load, out_load = sys.argv[1:5]
 
 built = {}
 for root, _, files in os.walk(kmods):
@@ -38,31 +38,21 @@ for src in (ref_load, extra_load):
         if m and not m.startswith('#') and m in built and m not in order:
             order.append(m)
 
-pat = re.compile('|'.join(l.strip() for l in open(regex_file) if l.strip() and not l.startswith('#')))
-second = {m for m in order if pat.match(m)}
-changed = True
-while changed:
-    changed = False
-    for m in order:
-        if m not in second and any(d in second for d in dep.get(m, []) + softpre.get(m, [])):
-            second.add(m)
-            changed = True
-first = {m for m in order if m not in second}
-
-stack = list(first)
+sel = set(order)
+stack = list(sel)
 while stack:
     m = stack.pop()
     for d in dep.get(m, []) + softpre.get(m, []):
-        if d not in first:
-            first.add(d)
+        if d not in sel:
+            sel.add(d)
             stack.append(d)
 
 required = [l.strip() for l in open(os.path.join(os.path.dirname(__file__), 'first_stage.required')) if l.strip()]
-lost = [m for m in required if m in built and m not in first]
+lost = [m for m in required if m in built and m not in sel]
 if lost:
-    sys.exit('first-stage modules pushed out: ' + ' '.join(lost))
+    sys.exit('first-stage modules missing from the load list: ' + ' '.join(lost))
 
-missing = [m for m in first if m not in built]
+missing = [m for m in sel if m not in built]
 if missing:
     sys.exit('missing modules: ' + ' '.join(missing))
 
@@ -83,10 +73,6 @@ def ordered(sel):
         visit(m)
     return out
 
-f1 = ordered(first)
-f2 = ordered({m for m in order if m not in first})
-print('moved to vendor_dlkm by dependency: ' + ' '.join(sorted(m for m in second if not pat.match(m))))
-open(out_first, 'w').write('\n'.join(f1) + '\n')
-open(out_second, 'w').write('\n'.join(f2) + '\n')
-print('first-stage: %d modules, %d bytes' % (len(f1), sum(os.path.getsize(built[m]) for m in f1)))
-print('vendor_dlkm: %d modules, %d bytes' % (len(f2), sum(os.path.getsize(built[m]) for m in f2)))
+f = ordered(sel)
+open(out_load, 'w').write('\n'.join(f) + '\n')
+print('ramdisk: %d modules, %d bytes' % (len(f), sum(os.path.getsize(built[m]) for m in f)))
