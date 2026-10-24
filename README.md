@@ -38,7 +38,7 @@
 
 # Installation
 **Installation — Odin3**
-> The `.tar` contains only the kernel. It does not boot without the A14 vendor, flash "_vendor.zip" from TWRP first (see below).
+> A disabled vbmeta is required. The `.tar` contains only the kernel. It does not boot without the A14 vendor, flash "_vendor.zip" from TWRP first (see below).
 
 1. Download the latest ".tar" from the release.
 2. Power off the device.
@@ -47,6 +47,8 @@
 5. Flash and wait for the device to reboot.
 
 **Installation — TWRP**
+> A disabled vbmeta is required.
+
 1. Download the latest kernel ".zip" and "_vendor.zip" from the release.
 2. Boot into Recovery Mode (TWRP).
 3. Select `Install` → choose the kernel `.zip` file.
