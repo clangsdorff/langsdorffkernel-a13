@@ -209,6 +209,8 @@ jobs:
         cp kernel/langsdorff@a13*.zip kernel/langsdorff@a13*.tar kernel_p/langsdorff@a13*.zip kernel_p/langsdorff@a13*.tar dist/
         (cd dist && sha256sum * > SHA256SUMS && md5sum $(ls | grep -v SUMS) > MD5SUMS && cat SHA256SUMS MD5SUMS)
     - name: Upload to gofile
+      id: gofile
+      continue-on-error: true
       working-directory: dist
       run: |
         token= folder=
@@ -227,3 +229,9 @@ jobs:
         done
         echo "gofile: $link"
         { echo "### gofile"; echo "$link"; echo '```'; cat SHA256SUMS; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    - name: Upload vendor artifact
+      if: steps.gofile.outcome == 'failure'
+      uses: actions/upload-artifact@v7
+      with:
+        name: A13-Vendor
+        path: dist/*_vendor.zip
