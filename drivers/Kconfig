@@ -285,5 +285,4 @@ source "drivers/battery/charger/syv660_charger/Kconfig"
 source "drivers/battery/fuelgauge/max1726x_fuelgauge/Kconfig"
 source "drivers/usb/typec/etek/et7303/Kconfig"
 source "drivers/usb/typec/etek/et7303/devices/Kconfig"
-source "drivers/kernelsu/Kconfig"
 endmenu

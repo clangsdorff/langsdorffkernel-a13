@@ -233,5 +233,3 @@ obj-y += battery/charger/syv660_charger/
 obj-y += battery/fuelgauge/max1726x_fuelgauge/
 obj-y += usb/typec/etek/et7303/
 obj-y += usb/typec/etek/et7303/devices/
-
-obj-$(CONFIG_KSU) += kernelsu/
