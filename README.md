@@ -38,7 +38,7 @@
 
 # Installation
 **Installation — Odin3**
-> A disabled vbmeta is required. The `.tar` contains only the kernel. It does not boot without the A14 vendor, flash "_vendor.zip" from TWRP first (see below).
+> The `.tar` contains only the kernel. It does not boot without the A14 vendor and odm, flash "_vendor.zip" and "_odm.img" from TWRP first (see below).
 
 1. Download the latest ".tar" from the release.
 2. Power off the device.
@@ -47,14 +47,13 @@
 5. Flash and wait for the device to reboot.
 
 **Installation — TWRP**
-> A disabled vbmeta is required.
-
-1. Download the latest kernel ".zip" and "_vendor.zip" from the release.
+1. Download the latest kernel ".zip", "_vendor.zip" and "_odm.img" from the release.
 2. Boot into Recovery Mode (TWRP).
 3. Select `Install` → choose the kernel `.zip` file.
 4. Extract "_vendor.zip", select `Install Image` → choose the `.img` and flash it to `Vendor`.
-5. Format data (once, when coming from stock or an unencrypted build).
-6. Reboot.
+5. Select `Install Image` → choose "_odm.img" and flash it to `ODM`.
+6. Format data (once, when coming from stock or an unencrypted build).
+7. Reboot.
 
 **Join / Follow**
 - Telegram: https://t.me/a14stuffs
@@ -67,7 +66,7 @@
 # Download
 - [GitHub Releases](https://github.com/clangsdorff/langsdorffkernel-a13/releases/latest)
 - `e` / `p`: Enforcing / Permissive SELinux. `n` builds have no overclock and no root.
-- `_vendor.zip` is needed on first install, kernel updates do not need a vendor flash.
+- `_vendor.zip` and `_odm.img` are needed on first install, kernel updates do not need a vendor or odm flash.
 
 **Device & Notes**
 - Device: A135F (Exynos 850)
