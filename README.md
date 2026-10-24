@@ -38,6 +38,8 @@
 
 # Installation
 **Installation — Odin3**
+> The `.tar` contains only the kernel. It does not boot without the A14 vendor, flash "_vendor.zip" from TWRP first (see below).
+
 1. Download the latest ".tar" from the release.
 2. Power off the device.
 3. Boot into Download Mode (connect to PC while holding Volume UP + Volume DOWN).
