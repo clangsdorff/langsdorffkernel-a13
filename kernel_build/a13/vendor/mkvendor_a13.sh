@@ -1,8 +1,8 @@
 #!/bin/bash
-# usage: sudo mkvendor_a13.sh <A13 stock vendor.img (f2fs) or its extracted tree> <A14 stock vendor.img (erofs)> <vendor_dlkm.tar.gz> <out.img>
+# usage: sudo mkvendor_a13.sh <A13 stock vendor.img (f2fs) or its extracted tree> <A14 stock vendor.img (erofs)> <out.img>
 set -euo pipefail
 
-[ $# -eq 4 ] || { sed -n 2p "$0" >&2; exit 2; }
+[ $# -eq 3 ] || { sed -n 2p "$0" >&2; exit 2; }
 [ "$(id -u)" -eq 0 ] || { echo "run as root (xattrs, loop mount)" >&2; exit 1; }
 for t in fsck.erofs mkfs.erofs dump.erofs setfattr getfattr readelf python3; do
     command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }
@@ -10,8 +10,7 @@ done
 
 A13_IMG=$(realpath "$1")
 A14_IMG=$(realpath "$2")
-DLKM_TAR=$(realpath "$3")
-OUT_IMG=$(realpath -m "$4")
+OUT_IMG=$(realpath -m "$3")
 KIT=$(dirname "$(realpath "$0")")
 OVERLAY=$KIT/vendor_overlay
 FSTAB=$KIT/../fstab.s5e3830
@@ -54,12 +53,8 @@ done
     label vendor_fw_file "$TREE/firmware/$f"
 done
 
+# Every module comes from the boot ramdisk
 rm -f "$TREE"/lib/modules/*.ko
-mkdir -p "$TREE/vendor_dlkm"
-tar -xzf "$DLKM_TAR" -C "$TREE/vendor_dlkm"
-chown -R 0:0 "$TREE/vendor_dlkm"
-find "$TREE/vendor_dlkm" -type d -exec chmod 755 {} + -exec setfattr -n security.selinux -v u:object_r:vendor_file:s0 {} +
-find "$TREE/vendor_dlkm" -type f -exec chmod 644 {} + -exec setfattr -n security.selinux -v u:object_r:vendor_file:s0 {} +
 
 # UN1CA vendor debloat: Defex policy and the stock recovery restoration
 rm -rf "$TREE/etc/dpolicy" \
@@ -70,9 +65,6 @@ rm -rf "$TREE/etc/dpolicy" \
 install -m 644 -o 0 -g 0 "$FSTAB" "$TREE/etc/fstab.s5e3830"
 label vendor_configs_file "$TREE/etc/fstab.s5e3830"
 
-# A13 has no vendor_dlkm partition; /vendor_dlkm on the A14 system is an empty mount point
-sed -i 's#^\(\s*\)exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor_dlkm/lib/modules input_booster_lkm.ko$#\1exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/vendor_dlkm/lib/modules --all=/vendor/vendor_dlkm/lib/modules/modules.load#' "$TREE/etc/init/init.s5e3830.rc"
-grep -q -- '--all=/vendor/vendor_dlkm/lib/modules/modules.load' "$TREE/etc/init/init.s5e3830.rc"
 
 # A14 KeyMint TA links EVP_PKEY_get_raw_private_key, which A13 TEEGRIS lacks; cat keeps the inode label
 ta=00000000-0000-0000-0000-4b45594d5354
@@ -162,6 +154,8 @@ drop_block() {
 }
 
 rc=etc/init/init.s5e3830.rc
+# A13 has no vendor_dlkm partition; input_booster_lkm is loaded from the boot ramdisk
+drop_line $rc '^ *exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor_dlkm/lib/modules input_booster_lkm\.ko$'
 drop_line $rc '^ *# Set permissions for persist partition$'
 drop_line $rc '^ *mkdir /persist '
 drop_line $rc '^ *symlink /data/app /factory$'

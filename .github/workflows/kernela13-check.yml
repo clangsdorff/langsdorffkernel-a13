@@ -198,10 +198,9 @@ jobs:
         md5sum -c MD5SUMS
     - name: Build vendor
       run: |
-        DLKM=$(ls kernel/*_vendor_dlkm.tar.gz)
-        NAME=$(basename "$DLKM" e_vendor_dlkm.tar.gz)_vendor
+        NAME=$(basename "$(ls kernel/langsdorff@a13*.zip)" e.zip)_vendor
         mkdir -p dist
-        sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "$DLKM" "dist/$NAME.img"
+        sudo env PATH="$PATH" bash kernel_build/a13/vendor/mkvendor_a13.sh stock/a13_vendor stock/vendor_a14.img "dist/$NAME.img"
         sudo chown "$(id -u):$(id -g)" "dist/$NAME.img"
         python3 kernel_build/avbtool add_hashtree_footer --image "dist/$NAME.img" --partition_name vendor \
           --hash_algorithm sha256 --algorithm SHA256_RSA4096 \
