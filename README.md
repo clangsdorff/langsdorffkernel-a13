@@ -17,6 +17,15 @@
 - AVB and some security checks disabled.
 - Based on Linux 5.10.236.
 
+**No Overclock & Root Version Features**
+- Everything in main version, **except**;
+- CPU & GPU overclock.
+- Floor under the GPU clock ceiling.
+- KernelSU & SUSFS
+
+**Recommendation**
+- On One UI ROMs, disabling RAM Plus is recommended for better performance.
+
 **Known Issues**
 - USB OTG is not confirmed to work.
 - Camera fixes are waiting for test results. Ultra-wide and macro calibration is not read yet.
@@ -24,14 +33,14 @@
 
 # Installation
 **Installation — Odin3**
-1. Download the latest ".tar" from the build.
+1. Download the latest ".tar" from the release.
 2. Power off the device.
 3. Boot into Download Mode (connect to PC while holding Volume UP + Volume DOWN).
 4. Open Odin3 and place the `.tar` into the `AP` slot.
 5. Flash and wait for the device to reboot.
 
 **Installation — TWRP**
-1. Download the latest kernel ".zip" and "_vendor.zip" from the build.
+1. Download the latest kernel ".zip" and "_vendor.zip" from the release.
 2. Boot into Recovery Mode (TWRP).
 3. Select `Install` → choose the kernel `.zip` file.
 4. Extract "_vendor.zip", select `Install Image` → choose the `.img` and flash it to `Vendor`.
@@ -48,8 +57,9 @@
 - KernelSU: [tiann](https://github.com/tiann/)
 
 # Download
-- Every push to `a13-port` builds the kernel and the vendor image.
-- The gofile link and the SHA256 checksums are in the GitHub Actions run summary.
+- [GitHub Releases](https://github.com/clangsdorff/langsdorffkernel-a13/releases/latest)
+- `e` / `p`: Enforcing / Permissive SELinux. `n` builds have no overclock and no root.
+- `_vendor.zip` is needed on first install, kernel updates do not need a vendor flash.
 
 **Device & Notes**
 - Device: A135F (Exynos 850)
