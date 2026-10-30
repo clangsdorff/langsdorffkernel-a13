@@ -11,6 +11,8 @@
 
 #include <asm/fpsimd.h>
 #include <asm/neon.h>
+#include <linux/hashtable.h>
+#include <linux/slab.h>
 
 #include "is-hw.h"
 #include "is-config.h"
@@ -25,6 +27,7 @@ struct is_fpsimd_stack {
 	struct is_fpsimd_state	state[IS_FPSIMD_MAX_DEPTH];
 	unsigned long		irq_flags[IS_FPSIMD_MAX_DEPTH];
 	bool			saved[IS_FPSIMD_MAX_DEPTH];
+	bool			func[IS_FPSIMD_MAX_DEPTH];
 	int			depth;
 };
 
@@ -42,7 +45,7 @@ static bool is_fpsimd_flush(void)
 	return true;
 }
 
-static int is_fpsimd_push(bool flushed)
+static int is_fpsimd_push(bool flushed, bool func)
 {
 	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
 	int idx = s->depth;
@@ -53,6 +56,7 @@ static int is_fpsimd_push(bool flushed)
 	s->depth = idx + 1;
 	barrier();
 	s->saved[idx] = !flushed;
+	s->func[idx] = func;
 	if (!flushed)
 		is_fpsimd_save_state(&s->state[idx]);
 
@@ -75,12 +79,83 @@ static void is_fpsimd_pop(void)
 
 void is_fpsimd_get_isr(void)
 {
-	is_fpsimd_push(false);
+	is_fpsimd_push(false, false);
 }
 
 void is_fpsimd_put_isr(void)
 {
 	is_fpsimd_pop();
+}
+
+struct is_fpsimd_func_ctx {
+	struct hlist_node	node;
+	struct task_struct	*task;
+	int			depth;
+	struct is_fpsimd_task	t;
+};
+
+static DEFINE_HASHTABLE(fpsimd_func_ctx, 4);
+static DEFINE_SPINLOCK(fpsimd_func_lock);
+
+static void is_fpsimd_notifier_on(void);
+
+static struct is_fpsimd_func_ctx *is_fpsimd_func_ctx_find(void)
+{
+	struct is_fpsimd_func_ctx *ctx;
+
+	hash_for_each_possible(fpsimd_func_ctx, ctx, node, (unsigned long)current)
+		if (ctx->task == current)
+			return ctx;
+
+	return NULL;
+}
+
+/* A13 DDK writes the sensor over i2c from inside a shot, so a call from a sleepable context must stay sleepable */
+static bool is_fpsimd_get_func_task(void)
+{
+	struct is_fpsimd_func_ctx *ctx;
+	unsigned long flags;
+
+	spin_lock_irqsave(&fpsimd_func_lock, flags);
+	ctx = is_fpsimd_func_ctx_find();
+	if (ctx)
+		ctx->depth++;
+	spin_unlock_irqrestore(&fpsimd_func_lock, flags);
+	if (ctx)
+		return true;
+
+	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return false;
+
+	ctx->task = current;
+	ctx->depth = 1;
+	is_fpsimd_notifier_on();
+	is_fpsimd_get_task(&ctx->t);
+
+	spin_lock_irqsave(&fpsimd_func_lock, flags);
+	hash_add(fpsimd_func_ctx, &ctx->node, (unsigned long)current);
+	spin_unlock_irqrestore(&fpsimd_func_lock, flags);
+	return true;
+}
+
+static void is_fpsimd_put_func_task(void)
+{
+	struct is_fpsimd_func_ctx *ctx;
+	unsigned long flags;
+
+	spin_lock_irqsave(&fpsimd_func_lock, flags);
+	ctx = is_fpsimd_func_ctx_find();
+	if (ctx && --ctx->depth == 0)
+		hash_del(&ctx->node);
+	else
+		ctx = NULL;
+	spin_unlock_irqrestore(&fpsimd_func_lock, flags);
+
+	if (ctx) {
+		is_fpsimd_put_task(&ctx->t);
+		kfree(ctx);
+	}
 }
 
 void is_fpsimd_get_func(void)
@@ -89,20 +164,35 @@ void is_fpsimd_get_func(void)
 	bool flushed;
 	int idx;
 
+	if (preemptible() && is_fpsimd_get_func_task())
+		return;
+
 	preempt_disable();
 	flushed = is_fpsimd_flush();
 	local_irq_save(flags);
 
-	idx = is_fpsimd_push(flushed);
+	idx = is_fpsimd_push(flushed, true);
 	if (idx >= 0)
 		fpsimd_stack[smp_processor_id()].irq_flags[idx] = flags;
 }
 
 void is_fpsimd_put_func(void)
 {
-	struct is_fpsimd_stack *s = &fpsimd_stack[smp_processor_id()];
-	unsigned long flags = s->depth > 0 ? s->irq_flags[s->depth - 1] : 0;
+	struct is_fpsimd_stack *s;
+	unsigned long flags;
+	bool atomic;
 
+	preempt_disable();
+	s = &fpsimd_stack[smp_processor_id()];
+	atomic = s->depth > 0 && s->func[s->depth - 1];
+	preempt_enable();
+
+	if (!atomic) {
+		is_fpsimd_put_func_task();
+		return;
+	}
+
+	flags = s->irq_flags[s->depth - 1];
 	WARN_ONCE(!irqs_disabled(), "is_fpsimd: DDK returned with IRQs enabled\n");
 
 	is_fpsimd_pop();
@@ -152,12 +242,17 @@ void is_fpsimd_put_task(struct is_fpsimd_task *t)
 	preempt_enable();
 }
 
-void is_fpsimd_set_task_using(struct task_struct *t)
+static void is_fpsimd_notifier_on(void)
 {
 	static atomic_t notifier_on = ATOMIC_INIT(0);
 
 	if (!atomic_xchg(&notifier_on, 1))
 		preempt_notifier_inc();
+}
+
+void is_fpsimd_set_task_using(struct task_struct *t)
+{
+	is_fpsimd_notifier_on();
 }
 #else
 void is_fpsimd_get_isr(void)
