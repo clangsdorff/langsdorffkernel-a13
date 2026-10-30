@@ -1257,6 +1257,10 @@ EXPORT_SYMBOL_GPL(fpsimd_save_and_flush_cpu_state);
  * Kernel-side NEON support functions
  */
 
+/* Camera DDK keeps live SIMD state in task context without a task binding, so softirq NEON must hand it back */
+static DEFINE_PER_CPU(struct user_fpsimd_state, softirq_fpsimd_state);
+static DEFINE_PER_CPU(bool, softirq_fpsimd_saved);
+
 /*
  * kernel_neon_begin(): obtain the CPU FPSIMD registers for use by the calling
  * context
@@ -1279,6 +1283,11 @@ void kernel_neon_begin(void)
 
 	get_cpu_fpsimd_context();
 
+	if (in_serving_softirq()) {
+		fpsimd_save_state(this_cpu_ptr(&softirq_fpsimd_state));
+		__this_cpu_write(softirq_fpsimd_saved, true);
+	}
+
 	/* Save unsaved fpsimd state, if any: */
 	fpsimd_save();
 
@@ -1300,6 +1309,11 @@ void kernel_neon_end(void)
 {
 	if (!system_supports_fpsimd())
 		return;
+
+	if (__this_cpu_read(softirq_fpsimd_saved)) {
+		fpsimd_load_state(this_cpu_ptr(&softirq_fpsimd_state));
+		__this_cpu_write(softirq_fpsimd_saved, false);
+	}
 
 	put_cpu_fpsimd_context();
 }
