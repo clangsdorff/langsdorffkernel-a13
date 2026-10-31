@@ -201,6 +201,26 @@ static int exynos_is_module_pin_control(struct is_module_enum *module,
 					return ret;
 				}
 			} else {
+				if (IS_ERR_OR_NULL(is_regulator->regulator) &&
+				    pin_ctrls->shared_rsc_type) {
+					struct is_module_regulator *owner;
+					struct regulator *self;
+
+					/* last user of a shared rail may not be the one that enabled it */
+					self = regulator_get_optional(dev, name);
+					if (!IS_ERR_OR_NULL(self)) {
+						list_for_each_entry(owner, &resourcemgr->regulator_list, list) {
+							if (owner != is_regulator &&
+							    !IS_ERR_OR_NULL(owner->regulator) &&
+							    regulator_is_equal(owner->regulator, self)) {
+								is_regulator = owner;
+								break;
+							}
+						}
+						regulator_put(self);
+					}
+				}
+
 				if (IS_ERR_OR_NULL(is_regulator->regulator)) {
 					merr("[M%d] regulator(%s) get failed\n",
 						module, module->sensor_id, name);
