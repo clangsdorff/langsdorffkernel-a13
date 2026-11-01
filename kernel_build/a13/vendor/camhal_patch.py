@@ -2,8 +2,8 @@
 # usage: camhal_patch.py <A14 lib64/libexynoscamera3.so> <out>
 # A14 sensor factory knows only A14 ids: the A13-absent cases (211, 221, 222) become GC5035, GC02M1, GC08A3
 # fasten AE (120 fps start-up mode) is off for HI1336, which wraps GC08A3: GC08A3 has no 120 fps mode
-# GC5035 Base takes the min/max digital zoom table HI556 gets from the parent class: its own table ends in
-# two zero entries, so the ultra wide lens reports a 0.0 minimum zoom and the camera app shows 0.0x
+# GC5035 Base leaves the last (LENS_PHYSICAL) min/max digital zoom pair at 0/0, so the camera app labels
+# the ultra wide 0.0x; it becomes 0.5/4.0 (1.0 would merge the ultra wide button into 1x)
 # HI1336 keeps the GC08A3 Base sensor, size and crop preview tables; its crop and full picture lists get GC08A3 sizes
 import hashlib
 import struct
@@ -57,8 +57,8 @@ PATCHES = [
     (0xf2aac, bl(0xf2aac, HI1336_BASE), bl(0xf2aac, GC08A3_BASE)),
     (0xf26d8, bl(0xf26d8, HI556_BASE), bl(0xf26d8, GC5035_BASE)),
     (0xf23c4, bl(0xf23c4, GC02M2_BASE), bl(0xf23c4, GC02M1_BASE)),
-    (0x124b7c, 0xd0000b6d, 0xf0000b4d),
-    (0x124b80, 0x913d51ad, 0x913941ad),
+    (0x124bdc, 0xf94019ae, 0xd2803e8e),
+    (0x124f14, 0xf902a67f, 0xf2c1f40e),
     (0xf2ba4, strb_fasten_ae(10), strb_fasten_ae(31)),
     (0xf2bf0, mov_w9(5), mov_w9(4)),
     (0xf2ae0, 0xfd00ee60, NOP),
