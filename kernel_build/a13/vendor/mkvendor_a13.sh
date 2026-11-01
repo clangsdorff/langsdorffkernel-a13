@@ -102,6 +102,9 @@ for f in setfile_jn1.bin setfile_gc02m1.bin setfile_gc02m1_macro.bin setfile_gc0
          tdnr_GC02M1.json tdnr_GC08A3.json tdnr_GC5035.json dual_cal_wide_sub.bin; do
     a13 "firmware/$f" 644 0 vendor_fw_file
 done
+# The A14 HAL reads the wide + ultra wide portrait cal as wide_swide, the A13 stock HAL named it wide_sub
+install -m 644 -o 0 -g 0 "$A13V/firmware/dual_cal_wide_sub.bin" "$TREE/firmware/dual_cal_wide_swide.bin"
+label vendor_fw_file "$TREE/firmware/dual_cal_wide_swide.bin"
 for f in is_lib.bin is_rta.bin; do
     python3 "$KIT/ddk_rebase.py" "$A13V/firmware/$f" "$TREE/firmware/$f"
     chown 0:0 "$TREE/firmware/$f"; chmod 644 "$TREE/firmware/$f"
