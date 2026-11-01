@@ -2148,6 +2148,8 @@ int cis_gc02m1_probe(struct i2c_client *client,
 
 	cis->use_dgain = false;
 	cis->hdr_ctrl_by_again = false;
+	/* exposure and gain are only written through cis_set_totalgain */
+	cis->use_total_gain = true;
 
 	cis->use_initial_ae = of_property_read_bool(dnode, "use_initial_ae");
 	probe_info("%s use initial_ae(%d)\n", __func__, cis->use_initial_ae);

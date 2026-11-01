@@ -2466,6 +2466,8 @@ int cis_gc5035_probe(struct i2c_client *client,
 
 	/* belows are depend on sensor cis. MUST check sensor spec */
 	cis->bayer_order = OTF_INPUT_ORDER_BAYER_RG_GB;
+	/* exposure and gain are only written through cis_set_totalgain */
+	cis->use_total_gain = true;
 
 	if (of_property_read_bool(dnode, "sensor_f_number")) {
 		ret = of_property_read_u32(dnode, "sensor_f_number", &cis->aperture_num);
