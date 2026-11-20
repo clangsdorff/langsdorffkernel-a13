@@ -3879,9 +3879,9 @@ int himax_chip_common_late_suspend(struct himax_ts_data *ts)
 		himax_set_cover_mode(ts, ts->cover_closed);
 
 	if (atomic_read(&ts->suspend_mode) == HIMAX_STATE_PROX_LPM) {
-		if (ts->prox_lp_scan_mode_enabled) {
+		/* aosp never sends prox_lp_scan_mode, without sleep out the slept tddi keeps reporting near */
+		if (ts->prox_lp_scan_mode_enabled || ts->pdata->prox_lp_scan_enabled)
 			g_core_fp._proximity_sleep_out();
-		}
 	}
 
 END:
