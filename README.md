@@ -22,7 +22,7 @@
 - A13 fingerprint (Egis ET528), NFC (NXP PN557) and cameras (S5KJN1, GC08A3, GC5035, GC02M1) on the A14 vendor.
 - /data encrypted with the stock A14 FBE flags.
 - AVB and some security checks disabled.
-- Merged with android13-5.10-lts, based on Linux 5.10.272.
+- Merged with android13-5.10-lts, based on Linux 5.10.274.
 
 **No Overclock & Root Version Features**
 - Everything in main version, **except**;
