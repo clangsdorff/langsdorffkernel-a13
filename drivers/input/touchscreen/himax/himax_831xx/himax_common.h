@@ -511,6 +511,7 @@ struct himax_ts_data {
 #endif
 	bool sysinput_seen;
 	bool tsp_rst_enabled;
+	bool irq_wake_enabled;
 
 #if IS_ENABLED(CONFIG_INPUT_SEC_NOTIFIER)
 	struct notifier_block himax_input_nb;
@@ -662,6 +663,9 @@ int himax_ctrl_lcd_regulators(struct himax_ts_data *ts, bool on);
 int himax_ctrl_lcd_reset_regulator(struct himax_ts_data *ts, bool on);
 int himax_ctrl_tsp_reset_regulator(struct himax_ts_data *ts, bool on);
 int himax_ctrl_tsp_reset(struct himax_ts_data *ts, bool on);
+#ifdef HX_TOUCH_PROXIMITY
+void psensor_enable(struct himax_ts_data *data, unsigned int mode);
+#endif
 int himax_lpwg_dump_buf_write(u8 *buf);
 int himax_lpwg_dump_buf_read(u8 *buf);
 void himax_lpwg_dump_buf_init(void);

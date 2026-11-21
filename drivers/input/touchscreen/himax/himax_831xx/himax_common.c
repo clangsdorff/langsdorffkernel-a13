@@ -3777,8 +3777,10 @@ int himax_chip_common_early_suspend(struct himax_ts_data *ts)
 	hx_ap_nodify_suspend(1);
 
 	if (ts->proxy_1b_en == 0) {
-		if (ts->ear_detect_mode && ts->aot_enabled)
+		if (ts->ear_detect_mode && ts->aot_enabled) {
 			ts->SMWP_enable = 0;
+			g_core_fp.fp_set_SMWP_enable(ts->SMWP_enable, ts->suspended);
+		}
 	}
 
 #if defined(HX_SMART_WAKEUP) || defined(HX_HIGH_SENSE) || defined(HX_USB_DETECT_GLOBAL)
@@ -3800,7 +3802,10 @@ int himax_chip_common_early_suspend(struct himax_ts_data *ts)
 			atomic_set(&ts->suspend_mode, HIMAX_STATE_LPM);
 			I("[himax] %s: set SMART_WAKEUP\n", __func__);
 		}
-		enable_irq_wake(ts->hx_irq);
+		if (!ts->irq_wake_enabled) {
+			enable_irq_wake(ts->hx_irq);
+			ts->irq_wake_enabled = true;
+		}
 		himax_ctrl_lcd_regulators(ts, true);
 		himax_ctrl_lcd_reset_regulator(ts, true);
 
@@ -4034,7 +4039,10 @@ int himax_chip_common_early_resume(struct himax_ts_data *ts)
 		goto END;
 	}
 	if ((atomic_read(&ts->suspend_mode) != HIMAX_STATE_POWER_ON) && (atomic_read(&ts->suspend_mode) != HIMAX_STATE_POWER_OFF)) {
-		disable_irq_wake(ts->hx_irq);
+		if (ts->irq_wake_enabled) {
+			disable_irq_wake(ts->hx_irq);
+			ts->irq_wake_enabled = false;
+		}
 		himax_ctrl_lcd_reset_regulator(ts, false);
 	}
 
