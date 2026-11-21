@@ -1096,7 +1096,6 @@ static void himax_fb_resume_work(struct work_struct *work)
 {
 	struct himax_ts_data *ts = container_of(work, struct himax_ts_data, fb_resume_work);
 
-	himax_common_early_resume(ts->dev);
 	himax_common_late_resume(ts->dev);
 }
 
@@ -1109,19 +1108,31 @@ static int himax_fb_notifier_callback(struct notifier_block *self, unsigned long
 	if (ts->sysinput_seen || ts->shutdown)
 		return 0;
 
-	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
+	if (evdata && evdata->data) {
 		blank = evdata->data;
-		switch (*blank) {
-		case FB_BLANK_POWERDOWN:
-			cancel_work_sync(&ts->fb_resume_work);
-			himax_common_early_suspend(ts->dev);
-			himax_common_late_suspend(ts->dev);
-			break;
-		case FB_BLANK_UNBLANK:
-			schedule_work(&ts->fb_resume_work);
-			break;
-		default:
-			break;
+		if (event == FB_EARLY_EVENT_BLANK) {
+			switch (*blank) {
+			case FB_BLANK_POWERDOWN:
+				cancel_work_sync(&ts->fb_resume_work);
+				himax_common_early_suspend(ts->dev);
+				break;
+			case FB_BLANK_UNBLANK:
+				himax_common_early_resume(ts->dev);
+				break;
+			default:
+				break;
+			}
+		} else if (event == FB_EVENT_BLANK) {
+			switch (*blank) {
+			case FB_BLANK_POWERDOWN:
+				himax_common_late_suspend(ts->dev);
+				break;
+			case FB_BLANK_UNBLANK:
+				schedule_work(&ts->fb_resume_work);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 	return 0;

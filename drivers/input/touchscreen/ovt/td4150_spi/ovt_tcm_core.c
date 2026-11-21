@@ -3715,7 +3715,6 @@ static void ovt_tcm_fb_resume_work(struct work_struct *work)
 {
 	struct ovt_tcm_hcd *tcm_hcd = container_of(work, struct ovt_tcm_hcd, fb_resume_work);
 
-	ovt_tcm_early_resume(&tcm_hcd->pdev->dev);
 	ovt_tcm_resume(&tcm_hcd->pdev->dev);
 }
 
@@ -3728,19 +3727,31 @@ static int ovt_tcm_fb_notifier_callback(struct notifier_block *self, unsigned lo
 	if (tcm_hcd->sysinput_seen || atomic_read(&tcm_hcd->shutdown))
 		return 0;
 
-	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
+	if (evdata && evdata->data) {
 		blank = evdata->data;
-		switch (*blank) {
-		case FB_BLANK_POWERDOWN:
-			cancel_work_sync(&tcm_hcd->fb_resume_work);
-			ovt_tcm_early_suspend(&tcm_hcd->pdev->dev);
-			ovt_tcm_suspend(&tcm_hcd->pdev->dev);
-			break;
-		case FB_BLANK_UNBLANK:
-			schedule_work(&tcm_hcd->fb_resume_work);
-			break;
-		default:
-			break;
+		if (event == FB_EARLY_EVENT_BLANK) {
+			switch (*blank) {
+			case FB_BLANK_POWERDOWN:
+				cancel_work_sync(&tcm_hcd->fb_resume_work);
+				ovt_tcm_early_suspend(&tcm_hcd->pdev->dev);
+				break;
+			case FB_BLANK_UNBLANK:
+				ovt_tcm_early_resume(&tcm_hcd->pdev->dev);
+				break;
+			default:
+				break;
+			}
+		} else if (event == FB_EVENT_BLANK) {
+			switch (*blank) {
+			case FB_BLANK_POWERDOWN:
+				ovt_tcm_suspend(&tcm_hcd->pdev->dev);
+				break;
+			case FB_BLANK_UNBLANK:
+				schedule_work(&tcm_hcd->fb_resume_work);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 	return 0;
