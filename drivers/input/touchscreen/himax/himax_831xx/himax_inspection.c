@@ -5960,8 +5960,8 @@ static ssize_t protos_event_store(struct device *dev,
 		goto out;
 	}
 
-	if (!(sec->cmd_param[0] == 0 || sec->cmd_param[0] == 1 || sec->cmd_param[0] == 3)) {
-		input_err(true, ts->dev, "%s: invalid parameter %d\n", __func__, sec->cmd_param[0]);
+	if (!(data == 0 || data == 1 || data == 3)) {
+		input_err(true, ts->dev, "%s: invalid parameter %d\n", __func__, data);
 		ret = -1;
 		goto out;
 	} else {

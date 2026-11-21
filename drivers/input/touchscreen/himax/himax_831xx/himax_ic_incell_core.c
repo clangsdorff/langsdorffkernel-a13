@@ -3459,6 +3459,14 @@ void himax_mcu_0f_operation(struct work_struct *work)
 	/*msleep (10);*/
 	g_core_fp.fp_touch_information();
 	/*msleep (10);*/
+#ifdef HX_TOUCH_PROXIMITY
+	if (private_ts->ear_detect_mode)
+		psensor_enable(private_ts, private_ts->ear_detect_mode);
+#endif
+#ifdef HX_SMART_WAKEUP
+	if (private_ts->SMWP_enable)
+		g_core_fp.fp_set_SMWP_enable(private_ts->SMWP_enable, private_ts->suspended);
+#endif
 	g_core_fp.fp_sense_on(0x00);
 	/*msleep (10);*/
 	I("%s:End\n", __func__);
