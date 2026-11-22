@@ -2329,6 +2329,34 @@ out:
 	input_info(true, &ts->client->dev, "%s : failed to switch %d mode\n", __func__, mode);
 }
 
+/* aosp never sends prox_lp_scan_mode, without sleep out the slept panel stops the ear scan and reports far */
+void nvt_ts_prox_sleep_out(struct nvt_ts_data *ts)
+{
+	u8 buf[3];
+	int ret = -EIO;
+	int retry = 3;
+
+	if (!ts->platdata->prox_lp_scan_enabled || !ts->ear_detect_mode)
+		return;
+
+	mutex_lock(&ts->lock);
+	if (ts->power_status != LP_MODE_STATUS) {
+		mutex_unlock(&ts->lock);
+		return;
+	}
+
+	while (retry-- && ret) {
+		buf[0] = EVENT_MAP_HOST_CMD;
+		buf[1] = EXTENDED_CUSTOMIZED_CMD;
+		buf[2] = PROX_SLEEP_OUT;
+		ret = nvt_ts_mode_switch_extended(ts, buf, 3, false);
+	}
+	mutex_unlock(&ts->lock);
+
+	input_info(true, &ts->client->dev, "%s: ed:%d %s\n", __func__,
+			ts->ear_detect_mode, ret ? "fail" : "done");
+}
+
 #endif
 
 /*
@@ -5910,6 +5938,10 @@ static ssize_t enabled_store(struct device *dev, struct device_attribute *attr,
 	} else if (buff[0] == DISPLAY_STATE_OFF) {
 		if (buff[1] == DISPLAY_EVENT_EARLY)
 			nvt_ts_suspend(&ts->client->dev);
+#if PROXIMITY_FUNCTION
+		else if (buff[1] == DISPLAY_EVENT_LATE)
+			nvt_ts_prox_sleep_out(ts);
+#endif
 	} else if (buff[0] == DISPLAY_STATE_LPM_OFF) {
 		input_info(true, &ts->client->dev, "%s: DISPLAY_STATE_LPM_OFF ++\n", __func__);
 		ts->power_status = POWER_OFF_STATUS;

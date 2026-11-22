@@ -634,6 +634,7 @@ int nvt_get_checksum(struct nvt_ts_data *ts, u8 *csum_result, u8 csum_size);
 int32_t nvt_set_page(uint32_t addr);
 #if PROXIMITY_FUNCTION
 int set_ear_detect(struct nvt_ts_data *ts, int mode, bool print_log);
+void nvt_ts_prox_sleep_out(struct nvt_ts_data *ts);
 int nvt_ts_mode_switch_extened(struct nvt_ts_data *ts, u8 *cmd, u8 len, bool print_log);
 #endif
 int nvt_ts_mode_switch(struct nvt_ts_data *ts, u8 cmd, bool print_log);

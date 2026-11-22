@@ -2858,6 +2858,11 @@ static int nvt_fb_notifier_callback(struct notifier_block *self, unsigned long e
 			case FB_BLANK_UNBLANK:
 				schedule_work(&ts->fb_resume_work);
 				break;
+#if PROXIMITY_FUNCTION
+			case FB_BLANK_POWERDOWN:
+				nvt_ts_prox_sleep_out(ts);
+				break;
+#endif
 			default:
 				break;
 			}
