@@ -3502,7 +3502,10 @@ int ovt_tcm_suspend(struct device *dev)
 
 	touch_free_objects();
 
-	if(tcm_hcd->prox_lp_scan_cnt > 0) {
+	/* aosp never sends prox_lp_scan_mode, without scan start the slept panel stops the ear scan */
+	if (tcm_hcd->prox_lp_scan_cnt > 0 ||
+			(tcm_hcd->lp_state == LP_MODE && tcm_hcd->ear_detect_enable &&
+			 tcm_hcd->hw_if->bdata->prox_lp_scan_enabled)) {
 		input_info(true, tcm_hcd->pdev->dev.parent, "%s: scan start!\n", __func__);
 		retval = ovt_tcm_set_scan_start_stop_cmd(tcm_hcd, 1);
 		if (retval < 0) {
