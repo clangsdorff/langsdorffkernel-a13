@@ -1714,7 +1714,7 @@ static int himax_checksum_cal(struct himax_ts_data *ts, uint8_t *buf, int ts_pat
 			I("[HIMAX TP MSG] All Zero event\n");
 
 		ret_val = HX_CHKSUM_FAIL;
-	} else {
+	} else if (ts_path == HX_REPORT_COORD || ts_path == HX_REPORT_COORD_RAWDATA) {
 		raw_data_sel = buf[HX_TOUCH_INFO_POINT_CNT]>>4 & 0x0F;
 		/*I("%s:raw_out_sel=%x , hx_touch_data->diag_cmd=%x.\n", __func__, raw_data_sel, hx_touch_data->diag_cmd);*/
 		if ((raw_data_sel != 0x0F) && (raw_data_sel != hx_touch_data->diag_cmd)) {/*raw data out not match skip it*/
@@ -3774,14 +3774,13 @@ int himax_chip_common_early_suspend(struct himax_ts_data *ts)
 		I("[himax] %s: Flash dump is going, reject suspend\n", __func__);
 		goto END;
 	}
-	hx_ap_nodify_suspend(1);
-
-	if (ts->proxy_1b_en == 0) {
-		if (ts->ear_detect_mode && ts->aot_enabled) {
-			ts->SMWP_enable = 0;
-			g_core_fp.fp_set_SMWP_enable(ts->SMWP_enable, ts->suspended);
-		}
+	if (ts->proxy_1b_en == 0 && ts->ear_detect_mode && ts->aot_enabled) {
+		ts->SMWP_enable = 0;
+		g_core_fp.fp_set_SMWP_enable(ts->SMWP_enable, ts->suspended);
+	} else if (ts->SMWP_enable) {
+		g_core_fp.fp_set_SMWP_enable(ts->SMWP_enable, ts->suspended);
 	}
+	hx_ap_nodify_suspend(1);
 
 #if defined(HX_SMART_WAKEUP) || defined(HX_HIGH_SENSE) || defined(HX_USB_DETECT_GLOBAL)
 #ifndef HX_RESUME_SEND_CMD

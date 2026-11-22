@@ -1311,6 +1311,8 @@ int himax_chip_common_probe(struct spi_device *spi)
 	if (ret < 0)
 		goto err_alloc_data_failed;
 
+	device_init_wakeup(&spi->dev, true);
+
 	ts->pdata->early_suspend = himax_common_early_suspend;
 	ts->pdata->late_suspend = himax_common_late_suspend;
 	ts->pdata->early_resume = himax_common_early_resume;
@@ -1360,6 +1362,8 @@ err_alloc_gbuffer_failed:
 int himax_chip_common_remove(struct spi_device *spi)
 {
 	struct himax_ts_data *ts = spi_get_drvdata(spi);
+
+	device_init_wakeup(&spi->dev, false);
 
 #if IS_ENABLED(CONFIG_USB_TYPEC_MANAGER_NOTIFIER)
 	manager_notifier_unregister(&ts->ccic_nb);
