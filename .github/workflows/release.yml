@@ -8,7 +8,20 @@ permissions:
   contents: write
 
 jobs:
+  CheckTag:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Check tag is on a13-port
+      run: |
+        git fetch origin a13-port
+        git merge-base --is-ancestor "$GITHUB_SHA" origin/a13-port || { echo "tag ${{ github.ref_name }} is not on a13-port"; exit 1; }
   Enforcing:
+    needs: CheckTag
     runs-on: ubuntu-22.04
 
     steps:
@@ -32,6 +45,7 @@ jobs:
         name: Enforcing-Build
         path: kernel_build/langsdorff@a13*
   Permissive:
+    needs: CheckTag
     runs-on: ubuntu-22.04
 
     steps:
@@ -55,6 +69,7 @@ jobs:
         name: Permissive-Build
         path: kernel_build/langsdorff@a13*
   EnforcingNoOC:
+    needs: CheckTag
     runs-on: ubuntu-22.04
 
     steps:
@@ -80,6 +95,7 @@ jobs:
         name: EnforcingNoOC-Build
         path: kernel_build/langsdorff@a13*
   PermissiveNoOC:
+    needs: CheckTag
     runs-on: ubuntu-22.04
 
     steps:
@@ -105,6 +121,7 @@ jobs:
         name: PermissiveNoOC-Build
         path: kernel_build/langsdorff@a13*
   Vendor:
+    needs: CheckTag
     runs-on: ubuntu-24.04
 
     steps:
