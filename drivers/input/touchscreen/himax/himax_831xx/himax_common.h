@@ -586,6 +586,10 @@ struct himax_ts_data {
 	int ear_detect_val;
 	int ear_detect_in_proximity;
 	bool prox_lp_scan_mode_enabled;
+	int prox_reported;
+	bool prox_lp_hold;
+	int prox_lp_stage;
+	struct delayed_work work_prox_lp;
 	u8 *lpwg_dump_buf;
 	u16 lpwg_dump_buf_idx;
 	u16 lpwg_dump_buf_size;

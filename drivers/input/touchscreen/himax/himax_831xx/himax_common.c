@@ -1058,6 +1058,63 @@ static void gest_pt_log_coordinate(int rx, int tx)
 	gest_pt_y[gest_pt_cnt] = tx * (ic_data->HX_Y_RES) / 255;
 }
 #endif
+#ifdef HX_TOUCH_PROXIMITY
+#define HX_PROX_LP_SLEEP_OUT_MS	300
+#define HX_PROX_LP_HOLD_MS	400
+
+static void himax_prox_report(struct himax_ts_data *ts, int val)
+{
+	/* the tddi reports far while the panel enters sleep, hold it until the lp scan settles */
+	if (ts->prox_lp_hold && !val) {
+		input_info(true, ts->dev, "%s: hold far in lp entry\n", __func__);
+		return;
+	}
+
+	ts->prox_reported = val;
+	input_report_abs(ts->input_dev_proximity, ABS_MT_CUSTOM, val);
+	input_sync(ts->input_dev_proximity);
+}
+
+static void himax_prox_lp_work(struct work_struct *work)
+{
+	struct himax_ts_data *ts = container_of(work, struct himax_ts_data, work_prox_lp.work);
+
+	if (ts->prox_lp_stage == 0) {
+		mutex_lock(&ts->device_lock);
+		if (ts->suspended && atomic_read(&ts->suspend_mode) == HIMAX_STATE_PROX_LPM &&
+				(ts->prox_lp_scan_mode_enabled || ts->pdata->prox_lp_scan_enabled) &&
+				g_core_fp._proximity_sleep_out)
+			g_core_fp._proximity_sleep_out();
+		mutex_unlock(&ts->device_lock);
+
+		ts->prox_lp_stage = 1;
+		schedule_delayed_work(&ts->work_prox_lp, msecs_to_jiffies(HX_PROX_LP_HOLD_MS));
+		return;
+	}
+
+	disable_irq(ts->hx_irq);
+	ts->prox_lp_hold = false;
+	if (ts->ear_detect_val >= 0 && ts->ear_detect_val != ts->prox_reported) {
+		input_info(true, ts->dev, "%s: release held state %d\n", __func__, ts->ear_detect_val);
+		himax_prox_report(ts, ts->ear_detect_val);
+	}
+	enable_irq(ts->hx_irq);
+}
+
+static void himax_prox_lp_start(struct himax_ts_data *ts)
+{
+	ts->prox_lp_stage = 0;
+	ts->prox_lp_hold = true;
+	schedule_delayed_work(&ts->work_prox_lp, msecs_to_jiffies(HX_PROX_LP_SLEEP_OUT_MS));
+}
+
+static void himax_prox_lp_stop(struct himax_ts_data *ts)
+{
+	cancel_delayed_work_sync(&ts->work_prox_lp);
+	ts->prox_lp_hold = false;
+}
+#endif
+
 static int himax_wake_event_parse(struct himax_ts_data *ts, int ts_status)
 {
 	uint8_t *buf = wake_event_buffer;
@@ -1108,8 +1165,7 @@ static int himax_wake_event_parse(struct himax_ts_data *ts, int ts_status)
 			ts->ear_detect_val = buf[0];
 			input_info(true, ts->dev, "%s %s proximity state=%d\n",
 					HIMAX_LOG_TAG, __func__, ts->ear_detect_val);
-			input_report_abs(ts->input_dev_proximity, ABS_MT_CUSTOM, ts->ear_detect_val);
-			input_sync(ts->input_dev_proximity);
+			himax_prox_report(ts, ts->ear_detect_val);
 			return 0;
 		}
 	}
@@ -2688,8 +2744,7 @@ int himax_report_data(struct himax_ts_data *ts, int ts_path, int ts_status)
 				ts->ear_detect_val = ((hx_touch_data->hx_state_info[1] >> 4) & 0x0F);
 				input_info(true, ts->dev, "%s %s Proximity state =%d\n",
 					HIMAX_LOG_TAG, __func__, ts->ear_detect_val);
-				input_report_abs(ts->input_dev_proximity, ABS_MT_CUSTOM, ts->ear_detect_val);
-				input_sync(ts->input_dev_proximity);
+				himax_prox_report(ts, ts->ear_detect_val);
 			}
 		}
 #endif
@@ -3236,6 +3291,8 @@ int himax_chip_common_init(void)
 	ts->ear_detect_mode = 0;
 	ts->ear_detect_val = -1;
 	ts->prox_lp_scan_mode_enabled = false;
+	ts->prox_reported = -1;
+	INIT_DELAYED_WORK(&ts->work_prox_lp, himax_prox_lp_work);
 #endif
 
 #ifdef HX_SMART_WAKEUP
@@ -3395,6 +3452,9 @@ void himax_chip_common_deinit(void)
 
 	cancel_delayed_work_sync(&ts->work_read_info);
 	cancel_delayed_work_sync(&ts->work_print_info);
+#ifdef HX_TOUCH_PROXIMITY
+	cancel_delayed_work_sync(&ts->work_prox_lp);
+#endif
 
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_HIMAX_DEBUG)
 	himax_debug_remove();
@@ -3797,6 +3857,9 @@ int himax_chip_common_early_suspend(struct himax_ts_data *ts)
 		if (ts->ear_detect_mode) {
 			atomic_set(&ts->suspend_mode, HIMAX_STATE_PROX_LPM);
 			I("[himax] %s: set HIMAX_STATE_PROX_LPM\n", __func__);
+#ifdef HX_TOUCH_PROXIMITY
+			himax_prox_lp_start(ts);
+#endif
 		} else {
 			atomic_set(&ts->suspend_mode, HIMAX_STATE_LPM);
 			I("[himax] %s: set SMART_WAKEUP\n", __func__);
@@ -4028,6 +4091,9 @@ int himax_chip_common_early_resume(struct himax_ts_data *ts)
 		input_err(true, ts->dev, "%s: already called power shutdown.\n", __func__);
 		return -EINVAL;
 	}
+#ifdef HX_TOUCH_PROXIMITY
+	himax_prox_lp_stop(ts);
+#endif
 
 	mutex_lock(&ts->device_lock);
 
@@ -4069,6 +4135,9 @@ int himax_chip_common_late_resume(struct himax_ts_data *ts)
 		return -EINVAL;
 	}
 
+#ifdef HX_TOUCH_PROXIMITY
+	himax_prox_lp_stop(ts);
+#endif
 	mutex_lock(&ts->device_lock);
 
 	input_info(true, ts->dev, "%s %s: START lp:%d cover:%d, ear_mode:%d, ear_val:%d, suspend_mode:%d\n",
