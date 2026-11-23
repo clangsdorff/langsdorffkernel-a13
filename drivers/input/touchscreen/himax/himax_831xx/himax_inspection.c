@@ -5087,10 +5087,11 @@ void psensor_enable(struct himax_ts_data *data, unsigned int mode)
 		tmp_addr[2] = 0x00;
 		tmp_addr[1] = 0x7f;
 		tmp_addr[0] = 0x20;
-		tmp_data[3] = 0xA1;
-		tmp_data[2] = 0x1A;
-		tmp_data[1] = 0xA1;
-		tmp_data[0] = 0x1A;
+		/* insensitive call mode loses the ear once the panel sleeps, use the normal mode value */
+		tmp_data[3] = 0xA3;
+		tmp_data[2] = 0x3A;
+		tmp_data[1] = 0xA3;
+		tmp_data[0] = 0x3A;
 		g_core_fp.fp_register_write(tmp_addr, 4, tmp_data, 0);
 		break;
 	case 3:
