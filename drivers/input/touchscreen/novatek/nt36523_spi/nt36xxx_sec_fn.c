@@ -2165,8 +2165,9 @@ int set_ear_detect(struct nvt_ts_data *ts, int mode, bool print_log)
 
 	reg = mode ? PROXIMITY_ENTER : PROXIMITY_LEAVE;
 
+	/* insensitivity mode loses the ear once the panel sleeps, use normal for the call mode too */
 	if (mode == 1)
-		subcmd = PROXIMITY_INSENSITIVITY;
+		subcmd = PROXIMITY_NORMAL;
 	else if (mode == 3)
 		subcmd = PROXIMITY_NORMAL;
 	else

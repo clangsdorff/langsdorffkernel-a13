@@ -325,6 +325,10 @@ struct nvt_ts_data {
 	bool ed_reset_flag;
 	long prox_power_off;
 	u8 hover_event;	//virtual_prox
+	u8 prox_reported;
+	bool prox_lp_hold;
+	int prox_lp_stage;
+	struct delayed_work work_prox_lp;
 	bool lcdoff_test;
 
 	u16 landscape_deadzone[2];
