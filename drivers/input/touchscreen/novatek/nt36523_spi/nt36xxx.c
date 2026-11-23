@@ -2388,6 +2388,53 @@ XFER_ERROR:
 
 
 #if PROXIMITY_FUNCTION
+#define NVT_PROX_LP_SLEEP_OUT_MS	300
+#define NVT_PROX_LP_HOLD_MS		400
+
+static void nvt_ts_prox_input(struct nvt_ts_data *ts, u8 status)
+{
+	ts->prox_reported = status;
+	input_report_abs(ts->input_dev_proximity, ABS_MT_CUSTOM, status);
+	input_sync(ts->input_dev_proximity);
+}
+
+static void nvt_ts_prox_lp_work(struct work_struct *work)
+{
+	struct nvt_ts_data *ts = container_of(work, struct nvt_ts_data, work_prox_lp.work);
+
+	if (ts->prox_lp_stage == 0) {
+		nvt_ts_prox_sleep_out(ts);
+		ts->prox_lp_stage = 1;
+		schedule_delayed_work(&ts->work_prox_lp, msecs_to_jiffies(NVT_PROX_LP_HOLD_MS));
+		return;
+	}
+
+	mutex_lock(&ts->lock);
+	ts->prox_lp_hold = false;
+	if (ts->hover_event != ts->prox_reported) {
+		input_info(true, &ts->client->dev, "%s: release held status %d\n",
+				__func__, ts->hover_event);
+		nvt_ts_prox_input(ts, ts->hover_event);
+	}
+	mutex_unlock(&ts->lock);
+}
+
+static void nvt_ts_prox_lp_start(struct nvt_ts_data *ts)
+{
+	if (!ts->ear_detect_mode || ts->power_status != LP_MODE_STATUS)
+		return;
+
+	ts->prox_lp_stage = 0;
+	ts->prox_lp_hold = true;
+	schedule_delayed_work(&ts->work_prox_lp, msecs_to_jiffies(NVT_PROX_LP_SLEEP_OUT_MS));
+}
+
+static void nvt_ts_prox_lp_stop(struct nvt_ts_data *ts)
+{
+	cancel_delayed_work_sync(&ts->work_prox_lp);
+	ts->prox_lp_hold = false;
+}
+
 void nvt_ts_proximity_report(uint8_t *data)
 {
 	struct nvt_ts_event_proximity *p_event_proximity;
@@ -2407,8 +2454,14 @@ void nvt_ts_proximity_report(uint8_t *data)
 
 	input_info(true, &ts->client->dev, "%s hover : %d\n", __func__, status);
 	ts->hover_event = status;
-	input_report_abs(ts->input_dev_proximity, ABS_MT_CUSTOM, status);
-	input_sync(ts->input_dev_proximity);
+
+	/* the ic reports far while the panel enters sleep, hold it until the lp scan settles */
+	if (ts->prox_lp_hold && !status) {
+		input_info(true, &ts->client->dev, "%s: hold far in lp entry\n", __func__);
+		return;
+	}
+
+	nvt_ts_prox_input(ts, status);
 
 #if 0
 	switch (p_event_proximity->status) {
@@ -3318,6 +3371,9 @@ static int32_t nvt_ts_probe(struct spi_device *client)
 
 	INIT_DELAYED_WORK(&ts->work_print_info, nvt_print_info_work);
 	INIT_DELAYED_WORK(&ts->work_read_info, nvt_read_info_work);
+#if PROXIMITY_FUNCTION
+	INIT_DELAYED_WORK(&ts->work_prox_lp, nvt_ts_prox_lp_work);
+#endif
 	schedule_delayed_work(&ts->work_read_info, msecs_to_jiffies(100));
 
 	//---set device node---
@@ -3532,6 +3588,9 @@ static int32_t nvt_ts_remove(struct spi_device *client)
 #endif
 
 	cancel_delayed_work_sync(&ts->work_read_info);
+#if PROXIMITY_FUNCTION
+	cancel_delayed_work_sync(&ts->work_prox_lp);
+#endif
 
 	if (ts->platdata->support_ear_detect)
 		device_init_wakeup(&ts->input_dev->dev, 0);
@@ -3865,6 +3924,10 @@ int32_t nvt_ts_suspend(struct device *dev)
 	}
 #endif
 
+#if PROXIMITY_FUNCTION
+	nvt_ts_prox_lp_start(ts);
+#endif
+
 	nvt_ts_release_all_finger(ts);
 
 	msleep(50);
@@ -3884,6 +3947,9 @@ void nvt_ts_early_resume(struct device *dev)
 	input_info(true, &ts->client->dev, "%s : start(%d)\n", __func__, ts->power_status);
 
 	cancel_delayed_work_sync(&ts->work_read_info);
+#if PROXIMITY_FUNCTION
+	nvt_ts_prox_lp_stop(ts);
+#endif
 
 	if (ts->shutdown_called) {
 		input_err(true, &ts->client->dev, "%s shutdown was called\n", __func__);
@@ -3925,6 +3991,9 @@ int32_t nvt_ts_resume(struct device *dev)
 
 	ts->lcd_esd_recovery = 0;
 	cancel_delayed_work_sync(&ts->work_read_info);
+#if PROXIMITY_FUNCTION
+	nvt_ts_prox_lp_stop(ts);
+#endif
 
 	if (ts->shutdown_called) {
 		input_err(true, &ts->client->dev, "%s shutdown was called\n", __func__);
